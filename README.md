@@ -1,5 +1,11 @@
 # sensorclock
 **!!This is a work in progress, use at your own risk!!**
+
+* U2 has an invalid I2C address
+ * [Workaround] Use ALLCALL to enable SUBADDR1 on all PCA9622's, then disable SUNADDR1 on the good addressed PCA9622's and use SUBADDR1 to address the wrong addressed PCA9622
+* The MCP3425 and DS3231 have the same I2C address #fail
+ * [Workaround] For now I cut the SDA/SCL traces to the DS3231
+
 ![Alt text](/sensorclock_bottom_components.png?raw=true)
 
 I'm a software engineer by trade and I was looking for a nice project to use [Windows 10 IoT Core](https://dev.windows.com/en-us/iot) running on a Raspberry Pi 2 Model B.
