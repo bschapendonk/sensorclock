@@ -33,7 +33,7 @@ namespace SensorClock
         const I2cBusSpeed BUSSPEED = I2cBusSpeed.FastMode;
 
         ThreadPoolTimer _timer;
-        bool _decimalPoint = false;
+        int _secondDisplayed = int.MaxValue;
         int _hourDisplayed = int.MaxValue;
         int _minuteDisplayed = int.MaxValue;
 
@@ -181,14 +181,13 @@ namespace SensorClock
             {
                 var second = new byte[17];
                 Buffer.BlockCopy(DIGITS[now.Second], 0, second, 0, second.Length);
-                if (_decimalPoint)
+                if (_secondDisplayed != now.Second)
                 {
-                    second[11] = 0xFF;
-                    _decimalPoint = false;
+                    _secondDisplayed = now.Second;
                 }
                 else
                 {
-                    _decimalPoint = true;
+                    second[11] = 0xFF;
                 }
                 _second.Write(second);
 
