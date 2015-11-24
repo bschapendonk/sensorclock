@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Background;
 using Windows.Devices.Enumeration;
@@ -18,64 +17,10 @@ namespace SensorClock
     {
         IBackgroundTaskInstance _taskInstance;
         BackgroundTaskDeferral _deferral;
-        ThreadPoolTimer _timer1;
+
         ThreadPoolTimer _timer2;
         ThreadPoolTimer _timer3;
 
-        const byte A1 = 0x08;
-        const byte B1 = 0x09;
-        const byte C1 = 0x02;
-        const byte D1 = 0x03;
-        const byte E1 = 0x04;
-        const byte F1 = 0x06;
-        const byte G1 = 0x05;
-        const byte DP1 = 0x07;
-
-        const byte A2 = 0x0D;
-        const byte B2 = 0x0E;
-        const byte C2 = 0x0F;
-        const byte D2 = 0x10;
-        const byte E2 = 0x11;
-        const byte F2 = 0x0B;
-        const byte G2 = 0x0A;
-        const byte DP2 = 0x0C;
-
-        byte[] digits = new[] { A1, B1, C1, D1, E1, F1, G1, DP1, A2, B2, C2, D2, E2, F2, G2, DP2 };
-
-        byte[][] DS1 = new[] {
-           new[] { A1, B1, C1, D1, E1, F1 },    // 0
-           new[] { B1, C1 },                    // 1
-           new[] { A1, B1, G1, E1, D1 },        // 2
-           new[] { A1, B1, G1, C1, D1 },        // 3
-           new[] { F1, G1, B1, C1 },            // 4
-           new[] { A1, F1, G1, C1, D1 },        // 5
-           new[] { A1, F1, G1, C1, D1, E1 },    // 6
-           new[] { A1, B1, C1 },                // 7
-           new[] { A1, B1, C1, D1, E1, F1, G1 },// 8
-           new[] { A1, B1, C1, D1, F1, G1 },     // 9
-           
-        };
-
-        byte[][] DS2 = new[] {
-           new[] { A2, B2, C2, D2, E2, F2 },    // 0
-           new[] { B2, C2 },                    // 2
-           new[] { A2, B2, G2, E2, D2 },        // 2
-           new[] { A2, B2, G2, C2, D2 },        // 3
-           new[] { F2, G2, B2, C2 },            // 4
-           new[] { A2, F2, G2, C2, D2 },        // 5
-           new[] { A2, F2, G2, C2, D2, E2 },    // 6
-           new[] { A2, B2, C2 },                // 7
-           new[] { A2, B2, C2, D2, E2, F2, G2 },// 8
-           new[] { A2, B2, C2, D2, F2, G2 },    // 9
-           
-        };
-
-        byte[][] _ds = new byte[100][];
-
-        I2cDevice _all;
-        I2cDevice _hour;
-        I2cDevice _minute;
-        I2cDevice _second;
         I2cDevice _mcp3425;
         I2cDevice _bme280;
         I2cDevice _tsl2561;
@@ -85,25 +30,15 @@ namespace SensorClock
         int leds = 8;
         byte[] endFrame;
         int _color = 0;
-        bool _up = true;
-        bool dp = true;
+        bool _up = false;
+
+        Clock _clock;
 
         public async void Run(IBackgroundTaskInstance taskInstance)
         {
             _taskInstance = taskInstance;
             _deferral = _taskInstance.GetDeferral();
             _taskInstance.Canceled += TaskInstance_Canceled;
-
-            digits = digits.OrderBy(d => d).ToArray();
-            for (var i = 0; i <= 9; i++)
-            {
-                for (var u = 0; u <= 9; u++)
-                {
-
-                    _ds[(i * 10) + u] = DS1[i].Union(DS2[u]).ToArray();
-                }
-            }
-
 
             // power cycle +3v3 to reset all I2C devices
             var gpio = GpioController.GetDefault();
@@ -119,15 +54,19 @@ namespace SensorClock
             _heater.Write(GpioPinValue.Low);
             _heater.SetDriveMode(GpioPinDriveMode.Output);
 
+            _clock = new Clock();
+            _clock.Start();
+
             await Init();
-            _timer1 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick1, TimeSpan.FromMilliseconds(500));
-            _timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(50));
+            await _clock.Init();
+
+            _timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(100));
             _timer3 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick3, TimeSpan.FromMilliseconds(1000));
         }
 
         private void TaskInstance_Canceled(IBackgroundTaskInstance sender, BackgroundTaskCancellationReason reason)
         {
-            _timer1.Cancel();
+            _clock.Dispose();
             _timer2.Cancel();
             _timer3.Cancel();
             _deferral.Complete();
@@ -137,28 +76,6 @@ namespace SensorClock
         {
             var deviceSelector = I2cDevice.GetDeviceSelector();
             var controllers = await DeviceInformation.FindAllAsync(deviceSelector);
-            _all = await I2cDevice.FromIdAsync(controllers[0].Id, new I2cConnectionSettings(0x70) { BusSpeed = I2cBusSpeed.FastMode });
-
-            // get out of sleepmode and activate SUBADR1
-            _all.Write(new byte[] { 0x00, 0x09 });
-            // wait to wake up
-            Task.Delay(10).GetAwaiter().GetResult();
-
-            _all.Write(new byte[] { 0x12, 0x32 });
-
-            // turn all led output on under pwm controll
-            _all.Write(new byte[] { 0x14, 0xFF });
-            _all.Write(new byte[] { 0x15, 0xFF });
-            _all.Write(new byte[] { 0x16, 0xFF });
-            _all.Write(new byte[] { 0x17, 0xFF });
-
-            _hour = await I2cDevice.FromIdAsync(controllers[0].Id, new I2cConnectionSettings(0x71) { BusSpeed = I2cBusSpeed.FastMode });
-            _minute = await I2cDevice.FromIdAsync(controllers[0].Id, new I2cConnectionSettings(0x01) { BusSpeed = I2cBusSpeed.FastMode });
-            _second = await I2cDevice.FromIdAsync(controllers[0].Id, new I2cConnectionSettings(0x02) { BusSpeed = I2cBusSpeed.FastMode });
-
-            // disable SUBADR1 for the working pca9622's
-            _minute.Write(new byte[] { 0x00, 0x01 });
-            _second.Write(new byte[] { 0x00, 0x01 });
 
             _mcp3425 = await I2cDevice.FromIdAsync(controllers[0].Id, new I2cConnectionSettings(0x68) { BusSpeed = I2cBusSpeed.FastMode });
             _mcp3425.Write(new byte[] { 0x98 }); // 16bit
@@ -198,61 +115,6 @@ namespace SensorClock
 
             // end
             _spiDevice.Write(endFrame);
-        }
-
-        private void Timer_Tick1(ThreadPoolTimer timer)
-        {
-            var now = DateTime.Now;
-            byte pwm = 0xFF;
-            if (_all != null && _second != null && _minute != null && _hour != null)
-            {
-                var second = _ds[now.Second];
-                foreach (var digit in digits)
-                {
-                    if (second.Contains(digit))
-                    {
-                        _second.Write(new byte[] { digit, pwm });
-                    }
-                    else
-                    {
-                        _second.Write(new byte[] { digit, 0x00 });
-                    }
-                }
-                if (dp)
-                {
-                    dp = false;
-                    _second.Write(new byte[] { DP2, pwm });
-                }
-                else
-                {
-                    dp = true;
-                    _second.Write(new byte[] { DP2, 0x00 });
-                }
-                var minute = _ds[now.Minute];
-                foreach (var digit in digits)
-                {
-                    if (minute.Contains(digit))
-                    {
-                        _minute.Write(new byte[] { digit, pwm });
-                    }
-                    else
-                    {
-                        _minute.Write(new byte[] { digit, 0x00 });
-                    }
-                }
-                var hour = _ds[now.Hour];
-                foreach (var digit in digits)
-                {
-                    if (hour.Contains(digit))
-                    {
-                        _hour.Write(new byte[] { digit, pwm });
-                    }
-                    else
-                    {
-                        _hour.Write(new byte[] { digit, 0x00 });
-                    }
-                }
-            }
         }
 
         private void Timer_Tick2(ThreadPoolTimer timer)
