@@ -158,6 +158,7 @@ namespace SensorClock
             _allcall.Write(new byte[] { REGISTER_MODE1, MODE1_SUBADDR1 | MODE1_ALLCALL });
             Task.Delay(10).GetAwaiter().GetResult();
             _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DEFAULT });
+            _allcall.Write(new byte[] { REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
             _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0xFF, 0xFF, 0xFF, 0xFF });
 
             _hour = await I2cDevice.FromIdAsync(controllers[0].Id, new I2cConnectionSettings(ADDR_HOUR) { BusSpeed = BUSSPEED });
@@ -190,10 +191,12 @@ namespace SensorClock
                     _decimalPoint = true;
                 }
                 _second.Write(second);
+
                 if (_minute != null && _minuteDisplayed != now.Minute)
                 {
                     _minuteDisplayed = now.Minute;
                     _minute.Write(DIGITS[_minuteDisplayed]);
+
                     if (_hour != null && _hourDisplayed != now.Hour)
                     {
                         _hourDisplayed = now.Hour;
