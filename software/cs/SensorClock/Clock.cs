@@ -14,7 +14,7 @@ namespace SensorClock
         const byte ADDR_MINUTE = 0x01;
         const byte ADDR_SECOND = 0x02;
 
-        const byte AI = 0x80;
+        const byte AUTO_INCREMENT = 0x80;
         const byte REGISTER_MODE1 = 0x00;
         const byte REGISTER_PWM0 = 0x02;
         const byte REGISTER_GRPPWM = 0x12;
@@ -39,6 +39,8 @@ namespace SensorClock
 
         public async Task Init()
         {
+            await Reset();
+
             var deviceSelector = I2cDevice.GetDeviceSelector();
             var controllers = await DeviceInformation.FindAllAsync(deviceSelector);
 
@@ -51,7 +53,7 @@ namespace SensorClock
             Task.Delay(10).GetAwaiter().GetResult();
 
             _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DEFAULT });
-            _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AI, 0xFF, 0xFF, 0xFF, 0xFF });
+            _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0xFF, 0xFF, 0xFF, 0xFF });
 
             _minute.Write(new byte[] { REGISTER_MODE1, MODE1_ALLCALL });
             _second.Write(new byte[] { REGISTER_MODE1, MODE1_ALLCALL });
@@ -65,6 +67,7 @@ namespace SensorClock
                 pca9622.Write(new byte[] { 0xA5 });
                 pca9622.Write(new byte[] { 0x5A });
             }
+            Task.Delay(10).GetAwaiter().GetResult();
         }
 
         public void Dispose()
@@ -78,8 +81,8 @@ namespace SensorClock
             if (_second != null)
                 _second.Dispose();
 
-            _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AI, 0x00, 0x00, 0x00, 0x00 });
-            _allcall.Write(new byte[] { REGISTER_PWM0 | AI, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
+            _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00 });
+            _allcall.Write(new byte[] { REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
             _allcall.Write(new byte[] { REGISTER_MODE1, MODE1_SLEEP | MODE1_ALLCALL });
 
             if (_allcall != null)
