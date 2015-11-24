@@ -179,7 +179,8 @@ namespace SensorClock
             var now = DateTime.Now;
             if (_second != null)
             {
-                var second = DIGITS[now.Second];
+                var second = new byte[17];
+                Buffer.BlockCopy(DIGITS[now.Second], 0, second, 0, second.Length);
                 if (_decimalPoint)
                 {
                     second[11] = 0xFF;
@@ -187,7 +188,6 @@ namespace SensorClock
                 }
                 else
                 {
-                    second[11] = 0x00;
                     _decimalPoint = true;
                 }
                 _second.Write(second);
