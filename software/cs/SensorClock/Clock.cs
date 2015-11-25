@@ -8,7 +8,10 @@ namespace SensorClock
 {
     class Clock : IDisposable
     {
-        const byte PWM_DEFAULT = 0x32;
+        const byte PWM_DEFAULT = 0x64;
+        const byte PWM_DIMM = 0x15;
+        const int DIMM_HOUR_BEGIN = 22;
+        const int DIMM_HOUR_END = 9;
 
         const byte ADDR_ALLCALL = 0x70;
         const byte ADDR_HOUR = 0x71;
@@ -200,6 +203,15 @@ namespace SensorClock
                     {
                         _hourDisplayed = now.Hour;
                         _hour.Write(DIGITS[_hourDisplayed]);
+
+                        if (now.Hour <= DIMM_HOUR_END || now.Hour >= DIMM_HOUR_BEGIN)
+                        {
+                            _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DIMM });
+                        }
+                        else
+                        {
+                            _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DEFAULT });
+                        }
                     }
                 }
             }
