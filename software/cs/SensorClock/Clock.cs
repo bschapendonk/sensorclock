@@ -9,7 +9,7 @@ namespace SensorClock
     class Clock : IDisposable
     {
         const byte PWM_DEFAULT = 0x64;
-        const byte PWM_DIMM = 0x15;
+        const byte PWM_DIMM = 0x01;
         const int DIMM_HOUR_BEGIN = 22;
         const int DIMM_HOUR_END = 9;
 
@@ -145,10 +145,8 @@ namespace SensorClock
         };
         #endregion
 
-
         public Clock()
         {
-
         }
 
         public async Task Init()
