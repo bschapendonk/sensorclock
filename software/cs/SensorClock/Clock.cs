@@ -13,7 +13,7 @@ namespace SensorClock
     /// </summary>
     class Clock : IDisposable
     {
-        const byte PWM_DEFAULT = 0xAA;
+        const byte PWM_DEFAULT = 0xCC;
         const byte PWM_DIMM = 0x01;
         const int DIMM_HOUR_BEGIN = 22;
         const int DIMM_HOUR_END = 8;

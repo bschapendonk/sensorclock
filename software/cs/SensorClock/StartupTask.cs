@@ -42,25 +42,25 @@ namespace SensorClock
             var gpio = GpioController.GetDefault();
 
             // turn off red en green led
-            var red = gpio.OpenPin(35);
-            red.Write(GpioPinValue.Low);
-            red.SetDriveMode(GpioPinDriveMode.Output);
-            var green = gpio.OpenPin(47);
-            green.Write(GpioPinValue.Low);
-            green.SetDriveMode(GpioPinDriveMode.Output);
+            //var red = gpio.OpenPin(35);
+            //red.Write(GpioPinValue.Low);
+            //red.SetDriveMode(GpioPinDriveMode.Output);
+            //var green = gpio.OpenPin(47);
+            //green.Write(GpioPinValue.Low);
+            //green.SetDriveMode(GpioPinDriveMode.Output);
 
             // power cycle +3v3 to reset all I2C devices
-            _shdn = gpio.OpenPin(5);
-            _shdn.Write(GpioPinValue.High);
-            _shdn.SetDriveMode(GpioPinDriveMode.Output);
-            _shdn.Write(GpioPinValue.Low);
-            // wait to discharge all capacitors
-            Task.Delay(3000).GetAwaiter().GetResult();
-            _shdn.Write(GpioPinValue.High);
+            //_shdn = gpio.OpenPin(5);
+            //_shdn.Write(GpioPinValue.High);
+            //_shdn.SetDriveMode(GpioPinDriveMode.Output);
+            //_shdn.Write(GpioPinValue.Low);
+            //// wait to discharge all capacitors
+            //Task.Delay(3000).GetAwaiter().GetResult();
+            //_shdn.Write(GpioPinValue.High);
 
-            _heater = gpio.OpenPin(16);
-            _heater.Write(GpioPinValue.Low);
-            _heater.SetDriveMode(GpioPinDriveMode.Output);
+            //_heater = gpio.OpenPin(16);
+            //_heater.Write(GpioPinValue.Low);
+            //_heater.SetDriveMode(GpioPinDriveMode.Output);
 
             _clock = new Clock();
             _clock.Start();
