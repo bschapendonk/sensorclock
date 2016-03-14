@@ -71,7 +71,7 @@ namespace SensorClock
             _bme280 = new BME280();
             await _bme280.Init();
 
-            _timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(4));
+            //_timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(4));
             //_timer3 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick3, TimeSpan.FromMilliseconds(1000));
         }
 

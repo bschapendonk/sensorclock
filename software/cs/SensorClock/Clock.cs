@@ -13,7 +13,7 @@ namespace SensorClock
     /// </summary>
     class Clock : IDisposable
     {
-        const byte PWM_DEFAULT = 0xCC;
+        const byte PWM_DEFAULT = 0x44;
         const byte PWM_DIMM = 0x01;
         const int DIMM_HOUR_BEGIN = 22;
         const int DIMM_HOUR_END = 8;
@@ -178,7 +178,7 @@ namespace SensorClock
 
         void Timer_Tick(ThreadPoolTimer timer)
         {
-            var now = DateTime.Now;
+            var now =  DateTime.Now;
             if (_second != null)
             {
                 var second = new byte[17];
