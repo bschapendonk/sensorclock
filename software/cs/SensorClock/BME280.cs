@@ -31,7 +31,8 @@ namespace SensorClock
         #region  Compensation parameters
         ushort dig_T1, dig_P1;
         short dig_T2, dig_T3, dig_P2, dig_P3, dig_P4, dig_P5, dig_P6, dig_P7, dig_P8, dig_P9, dig_H2, dig_H4, dig_H5;
-        byte dig_H1, dig_H3, dig_H6;
+        byte dig_H1, dig_H3;
+        sbyte dig_H6;
         int t_fine;
         #endregion
 
@@ -86,9 +87,9 @@ namespace SensorClock
             dig_H1 = buffer[0];
             dig_H2 = (short)ReadUsignedShort(buffer, 1);
             dig_H3 = buffer[3];
-            dig_H4 = (short)((buffer[4] << 4) | (buffer[5] & 0xf));
+            dig_H4 = (short)((buffer[4] << 4) | (buffer[5] & 0xF));
             dig_H5 = (short)((buffer[6] << 4) | (buffer[5] >> 4));
-            dig_H6 = buffer[7];
+            dig_H6 = (sbyte)buffer[7];
         }
 
         public void Sample()
