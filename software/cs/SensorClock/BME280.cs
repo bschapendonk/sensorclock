@@ -80,15 +80,15 @@ namespace SensorClock
             dig_P8 = (short)ReadUsignedShort(buffer, 20);
             dig_P9 = (short)ReadUsignedShort(buffer, 22);
 
-            buffer = new byte[7];
+            buffer = new byte[8];
             _bme280.WriteRead(new byte[] { REGISTER_CALIB26 }, buffer);
 
             dig_H1 = buffer[0];
             dig_H2 = (short)ReadUsignedShort(buffer, 1);
             dig_H3 = buffer[3];
-            dig_H4 = (short)ReadUsignedShort(buffer, 4); // todo: dig_H4 [11:4] / [3:0]  
-            dig_H5 = (short)ReadUsignedShort(buffer, 5); // todo: dig_H5 [3:0] / [11:4]
-            dig_H6 = buffer[6];
+            dig_H4 = (short)((buffer[4] << 4) | (buffer[5] & 0xf));
+            dig_H5 = (short)((buffer[6] << 4) | (buffer[5] >> 4));
+            dig_H6 = buffer[7];
         }
 
         public void Sample()
