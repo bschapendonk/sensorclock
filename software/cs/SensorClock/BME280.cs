@@ -87,8 +87,8 @@ namespace SensorClock
             dig_H1 = buffer[0];
             dig_H2 = (short)ReadUsignedShort(buffer, 1);
             dig_H3 = buffer[3];
-            dig_H4 = (short)((buffer[4] << 4) | (buffer[5] & 0xF));
-            dig_H5 = (short)((buffer[6] << 4) | (buffer[5] >> 4));
+            dig_H4 = (short)((buffer[4] << 4) + (buffer[5] & 0xF));
+            dig_H5 = (short)((buffer[5] >> 4) + (buffer[6] << 4));
             dig_H6 = (sbyte)buffer[7];
         }
 
