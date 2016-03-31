@@ -1,11 +1,4 @@
 # sensorclock
-**!!This is a work in progress, use at your own risk!!**
-
-* U2 has an invalid I2C address
- * [Workaround] Use ALLCALL to enable SUBADDR1 on all PCA9622's, then disable SUBADDR1 on the good addressed PCA9622's and use SUBADDR1 to address the wrong addressed U2
-* The MCP3425 and DS3231 have the same I2C address #fail
- * [Workaround] For now I cut the SDA/SCL traces to the DS3231
-
 ![Alt text](/assets/1.jpg?raw=true)
 ![Alt text](/assets/2.jpg?raw=true)
 
@@ -19,6 +12,13 @@ Everything is controlled thru I2C, except the RGB leds which use SPI, some GPIO'
 * [Board Top](/hardware/pdf/sensorclock_top.pdf)
 * [Board Bottom](/hardware/pdf/sensorclock_bottom.pdf)
 * [Gerbers](/hardware/gerber)
+
+**!!This is a work in progress, use at your own risk!!**
+
+* U2 has an invalid I2C address
+ * [Workaround] Use ALLCALL to enable SUBADDR1 on all PCA9622's, then disable SUBADDR1 on the good addressed PCA9622's and use SUBADDR1 to address the wrong addressed U2
+* The MCP3425 and DS3231 have the same I2C address #fail
+ * [Workaround] For now I cut the SDA/SCL traces to the DS3231
 
 ## features
 * Windows 10 IoT Core controlled
