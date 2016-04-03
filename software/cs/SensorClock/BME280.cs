@@ -16,15 +16,18 @@ namespace SensorClock
 
         const byte REGISTER_CTRL_HUM = 0xF2;
         const byte REGISTER_CTRL_MEAS = 0xF4;
+        const byte REGISTER_CONFIG = 0xF5;
         const byte REGISTER_ID = 0xD0;
         const byte REGISTER_CALIB00 = 0x88;
         const byte REGISTER_CALIB26 = 0xE1;
         const byte REGISTER_HUM_LSB = 0xF7;
 
         const byte CTRL_HUM_OSRS_H = 0x01; // Humidity oversampling ×1
-        const byte CTRL_MEAS_OSRS_P = 0x20; // Pressure oversampling ×1
-        const byte CTRL_MEAS_OSRS_T = 0x04; // Temperature oversampling ×1
+        const byte CTRL_MEAS_OSRS_P = 0x14; // Pressure oversampling ×16
+        const byte CTRL_MEAS_OSRS_T = 0x40; // Temperature oversampling ×2
         const byte CTRL_MEAS_MODE = 0x03; // Mode normal
+        const byte CONFIG_TSB = 0x80; // 500ms
+        const byte CONFIG_FILTER = 0x10; // 16
 
         const byte CHIP_ID = 0x60;
 
@@ -50,6 +53,7 @@ namespace SensorClock
             _bme280 = await I2cDevice.FromIdAsync(controllers[0].Id, new I2cConnectionSettings(ADDR) { BusSpeed = I2cBusSpeed.FastMode });
             _bme280.Write(new byte[] { REGISTER_CTRL_HUM, CTRL_HUM_OSRS_H });
             _bme280.Write(new byte[] { REGISTER_CTRL_MEAS, CTRL_MEAS_OSRS_P | CTRL_MEAS_OSRS_T | CTRL_MEAS_MODE });
+            _bme280.Write(new byte[] { REGISTER_CONFIG, CONFIG_TSB | CONFIG_FILTER });
 
             ValidateChipId();
             SetTrimmingParamaters();
@@ -87,7 +91,7 @@ namespace SensorClock
             dig_H1 = buffer[0];
             dig_H2 = (short)ReadUsignedShort(buffer, 1);
             dig_H3 = buffer[3];
-            dig_H4 = (short)((buffer[4] << 4) + (buffer[5] & 0xF));
+            dig_H4 = (short)((buffer[4] << 4) + (buffer[5] & 0x0F));
             dig_H5 = (short)((buffer[5] >> 4) + (buffer[6] << 4));
             dig_H6 = (sbyte)buffer[7];
         }
