@@ -36,7 +36,7 @@ namespace SensorClock
         short dig_T2, dig_T3, dig_P2, dig_P3, dig_P4, dig_P5, dig_P6, dig_P7, dig_P8, dig_P9, dig_H2, dig_H4, dig_H5;
         byte dig_H1, dig_H3;
         sbyte dig_H6;
-        int t_fine;
+        long t_fine;
         #endregion
 
         I2cDevice _bme280;
@@ -72,24 +72,24 @@ namespace SensorClock
             var buffer = new byte[25];
             _bme280.WriteRead(new byte[] { REGISTER_CALIB00 }, buffer);
 
-            dig_T1 = ReadUsignedShort(buffer);
-            dig_T2 = (short)ReadUsignedShort(buffer, 2);
-            dig_T3 = (short)ReadUsignedShort(buffer, 4);
-            dig_P1 = ReadUsignedShort(buffer, 6);
-            dig_P2 = (short)ReadUsignedShort(buffer, 8);
-            dig_P3 = (short)ReadUsignedShort(buffer, 10);
-            dig_P4 = (short)ReadUsignedShort(buffer, 12);
-            dig_P5 = (short)ReadUsignedShort(buffer, 14);
-            dig_P6 = (short)ReadUsignedShort(buffer, 16);
-            dig_P7 = (short)ReadUsignedShort(buffer, 18);
-            dig_P8 = (short)ReadUsignedShort(buffer, 20);
-            dig_P9 = (short)ReadUsignedShort(buffer, 22);
+            dig_T1 = ReadUnsignedShortLittleEndian(buffer);
+            dig_T2 = ReadSignedShortLittleEndian(buffer, 2);
+            dig_T3 = ReadSignedShortLittleEndian(buffer, 4);
+            dig_P1 = ReadUnsignedShortLittleEndian(buffer, 6);
+            dig_P2 = ReadSignedShortLittleEndian(buffer, 8);
+            dig_P3 = ReadSignedShortLittleEndian(buffer, 10);
+            dig_P4 = ReadSignedShortLittleEndian(buffer, 12);
+            dig_P5 = ReadSignedShortLittleEndian(buffer, 14);
+            dig_P6 = ReadSignedShortLittleEndian(buffer, 16);
+            dig_P7 = ReadSignedShortLittleEndian(buffer, 18);
+            dig_P8 = ReadSignedShortLittleEndian(buffer, 20);
+            dig_P9 = ReadSignedShortLittleEndian(buffer, 22);
 
             buffer = new byte[8];
             _bme280.WriteRead(new byte[] { REGISTER_CALIB26 }, buffer);
 
             dig_H1 = buffer[0];
-            dig_H2 = (short)ReadUsignedShort(buffer, 1);
+            dig_H2 = ReadSignedShortLittleEndian(buffer, 1);
             dig_H3 = buffer[3];
             dig_H4 = (short)((buffer[4] << 4) + (buffer[5] & 0x0F));
             dig_H5 = (short)((buffer[5] >> 4) + (buffer[6] << 4));
@@ -103,15 +103,7 @@ namespace SensorClock
 
             Temperature = BME280_compensate_T_double(ReadSignedInteger(buffer, 3));
             Pressure = BME280_compensate_P_double(ReadSignedInteger(buffer, 0));
-            Humidity = BME280_compensate_H_double(ReadUsignedShort(buffer, 6));
-        }
-
-        ushort ReadUsignedShort(byte[] buffer, int offset = 0)
-        {
-            if (offset + 1 >= buffer.Length)
-                throw new ArgumentOutOfRangeException(nameof(offset));
-
-            return (ushort)((buffer[offset + 1] << 8) + buffer[offset]);
+            Humidity = BME280_compensate_H_double(ReadSignedShort(buffer, 6));
         }
 
         int ReadSignedInteger(byte[] buffer, int offset)
@@ -120,6 +112,30 @@ namespace SensorClock
                 throw new ArgumentOutOfRangeException(nameof(offset));
 
             return (buffer[offset] << 12) + (buffer[offset + 1] << 4) + (buffer[offset + 2] >> 4);
+        }
+
+        short ReadSignedShort(byte[] buffer, int offset = 0)
+        {
+            if (offset + 1 >= buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+
+            return (short)((buffer[offset] << 8) + buffer[offset + 1]);
+        }
+
+        short ReadSignedShortLittleEndian(byte[] buffer, int offset = 0)
+        {
+            if (offset + 1 >= buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+
+            return (short)((buffer[offset + 1] << 8) + buffer[offset]);
+        }
+
+        ushort ReadUnsignedShortLittleEndian(byte[] buffer, int offset = 0)
+        {
+            if (offset + 1 >= buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+
+            return (ushort)((buffer[offset + 1] << 8) + buffer[offset]);
         }
 
         #region Compensation formulas straight from the datasheet
