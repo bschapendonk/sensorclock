@@ -18,8 +18,9 @@ namespace SensorClock
         const byte REGISTER_CTRL_MEAS = 0xF4;
         const byte REGISTER_CONFIG = 0xF5;
         const byte REGISTER_ID = 0xD0;
-        const byte REGISTER_CALIB00 = 0x88;
-        const byte REGISTER_CALIB26 = 0xE1;
+        const byte REGISTER_DIG_T1 = 0x88;
+        const byte REGISTER_DIG_H1 = 0xA1;
+        const byte REGISTER_DIG_H2 = 0xE1;
         const byte REGISTER_HUM_LSB = 0xF7;
 
         const byte CTRL_HUM_OSRS_H = 0x01; // Humidity oversampling ×1
@@ -51,12 +52,13 @@ namespace SensorClock
             var controllers = await DeviceInformation.FindAllAsync(deviceSelector);
 
             _bme280 = await I2cDevice.FromIdAsync(controllers[0].Id, new I2cConnectionSettings(ADDR) { BusSpeed = I2cBusSpeed.FastMode });
-            _bme280.Write(new byte[] { REGISTER_CTRL_HUM, CTRL_HUM_OSRS_H });
-            _bme280.Write(new byte[] { REGISTER_CTRL_MEAS, CTRL_MEAS_OSRS_P | CTRL_MEAS_OSRS_T | CTRL_MEAS_MODE });
-            _bme280.Write(new byte[] { REGISTER_CONFIG, CONFIG_TSB | CONFIG_FILTER });
 
             ValidateChipId();
             SetTrimmingParamaters();
+
+            _bme280.Write(new byte[] { REGISTER_CTRL_HUM, CTRL_HUM_OSRS_H });
+            _bme280.Write(new byte[] { REGISTER_CTRL_MEAS, CTRL_MEAS_OSRS_P | CTRL_MEAS_OSRS_T | CTRL_MEAS_MODE });
+            _bme280.Write(new byte[] { REGISTER_CONFIG, CONFIG_TSB | CONFIG_FILTER });
         }
 
         void ValidateChipId()
@@ -70,11 +72,12 @@ namespace SensorClock
         void SetTrimmingParamaters()
         {
             var buffer = new byte[25];
-            _bme280.WriteRead(new byte[] { REGISTER_CALIB00 }, buffer);
+            _bme280.WriteRead(new byte[] { REGISTER_DIG_T1 }, buffer);
 
             dig_T1 = ReadUnsignedShortLittleEndian(buffer);
             dig_T2 = ReadSignedShortLittleEndian(buffer, 2);
             dig_T3 = ReadSignedShortLittleEndian(buffer, 4);
+
             dig_P1 = ReadUnsignedShortLittleEndian(buffer, 6);
             dig_P2 = ReadSignedShortLittleEndian(buffer, 8);
             dig_P3 = ReadSignedShortLittleEndian(buffer, 10);
@@ -85,15 +88,19 @@ namespace SensorClock
             dig_P8 = ReadSignedShortLittleEndian(buffer, 20);
             dig_P9 = ReadSignedShortLittleEndian(buffer, 22);
 
-            buffer = new byte[8];
-            _bme280.WriteRead(new byte[] { REGISTER_CALIB26 }, buffer);
+            buffer = new byte[1];
+            _bme280.WriteRead(new byte[] { REGISTER_DIG_H1 }, buffer);
 
             dig_H1 = buffer[0];
-            dig_H2 = ReadSignedShortLittleEndian(buffer, 1);
-            dig_H3 = buffer[3];
-            dig_H4 = (short)((buffer[4] << 4) + (buffer[5] & 0x0F));
-            dig_H5 = (short)((buffer[5] >> 4) + (buffer[6] << 4));
-            dig_H6 = (sbyte)buffer[7];
+
+            buffer = new byte[7];
+            _bme280.WriteRead(new byte[] { REGISTER_DIG_H2 }, buffer);
+
+            dig_H2 = ReadSignedShortLittleEndian(buffer, 0);
+            dig_H3 = buffer[2];
+            dig_H4 = (short)((buffer[3] << 4) + (buffer[4] & 0x0F));
+            dig_H5 = (short)((buffer[4] >> 4) + (buffer[5] << 4));
+            dig_H6 = (sbyte)buffer[6];
         }
 
         public void Sample()
