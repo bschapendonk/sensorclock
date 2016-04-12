@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Background;
 using Windows.Devices.Enumeration;
@@ -154,11 +155,11 @@ namespace SensorClock
 
         private void Timer_Tick3(ThreadPoolTimer timer)
         {
-            double temperature;
-            double pressure;
-            double humidity;
-            int lux;
-            double adc;
+            var temperature = 0d;
+            var pressure = 0d;
+            var humidity = 0d;
+            var lux = 0;
+            var adc = 0d;
 
             if (_mcp3425 != null)
             {
@@ -186,6 +187,12 @@ namespace SensorClock
                 _tsl2561.WriteRead(new byte[] { 0xAC }, buffer);
                 lux = 256 * buffer[1] + buffer[0];
                 Debug.WriteLine("light: " + lux);
+            }
+
+            using (var client = new HttpClient())
+            {
+                var apikey = "";
+                var result = client.GetAsync($"https://api.thingspeak.com/update?api_key={apikey}&field1={temperature}&field2={pressure}&field3={humidity}&field4={lux}&field5={adc}").Result;
             }
         }
 
