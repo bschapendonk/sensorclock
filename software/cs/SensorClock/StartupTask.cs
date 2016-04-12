@@ -58,9 +58,9 @@ namespace SensorClock
             //Task.Delay(3000).GetAwaiter().GetResult();
             //_shdn.Write(GpioPinValue.High);
 
-            //_heater = gpio.OpenPin(16);
-            //_heater.Write(GpioPinValue.Low);
-            //_heater.SetDriveMode(GpioPinDriveMode.Output);
+            _heater = gpio.OpenPin(16);
+            _heater.Write(GpioPinValue.Low);
+            _heater.SetDriveMode(GpioPinDriveMode.Output);
 
             _clock = new Clock();
             _clock.Start();
@@ -71,8 +71,8 @@ namespace SensorClock
             _bme280 = new BME280();
             await _bme280.Init();
 
-            //_timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(4));
-            //_timer3 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick3, TimeSpan.FromMilliseconds(1000));
+            _timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(4));
+            _timer3 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick3, TimeSpan.FromMilliseconds(1000));
         }
 
         private void TaskInstance_Canceled(IBackgroundTaskInstance sender, BackgroundTaskCancellationReason reason)
@@ -135,9 +135,9 @@ namespace SensorClock
                 {
                     var color = HsvToRgb(_color, 255, 255);
                     _spiDevice.Write(new byte[4]);
-                    for(var i=0; i < 8; i++)
+                    for (var i = 0; i < 8; i++)
                     {
-                        
+
                         _spiDevice.Write(new byte[] { _brightness, color.B, color.G, color.R });
                     }
                     _spiDevice.Write(endFrame);
@@ -154,17 +154,27 @@ namespace SensorClock
 
         private void Timer_Tick3(ThreadPoolTimer timer)
         {
+            double temperature;
+            double pressure;
+            double humidity;
+            int lux;
+            double adc;
+
             if (_mcp3425 != null)
             {
                 var buffer = new byte[3];
                 _mcp3425.Read(buffer);
-                var voltage = (256 * buffer[0] + buffer[1]) * 0.0000625;
-                Debug.WriteLine("adc: " + voltage);
+                adc = (256 * buffer[0] + buffer[1]) * 0.0000625;
+                Debug.WriteLine("adc: " + adc);
             }
 
             if (_bme280 != null)
             {
                 _bme280.Sample();
+                temperature = _bme280.Temperature;
+                pressure = _bme280.Pressure;
+                humidity = _bme280.Humidity;
+
                 Debug.WriteLine($"temperature: {_bme280.Temperature} DegC");
                 Debug.WriteLine($"pressure: {_bme280.Pressure} Pa");
                 Debug.WriteLine($"humidity: {_bme280.Humidity} %rH");
@@ -174,7 +184,8 @@ namespace SensorClock
             {
                 var buffer = new byte[2];
                 _tsl2561.WriteRead(new byte[] { 0xAC }, buffer);
-                Debug.WriteLine("light: " + 256 * buffer[1] + buffer[0]);
+                lux = 256 * buffer[1] + buffer[0];
+                Debug.WriteLine("light: " + lux);
             }
         }
 
