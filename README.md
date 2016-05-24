@@ -21,8 +21,8 @@ Everything is controlled thru I2C, except the RGB leds which use SPI, some GPIO'
 * The MCP3425 and DS3231 have the same I2C address #fail
  * [Workaround] For now I cut the SDA/SCL traces to the DS3231
 * The interconnect between te sensorclock and the Raspberrry Pi 2
- * I used a custum header cable, but these are hard to assemble and the process is error prone
-
+ * This is a custom cable which saved time in design process of the board (less complex routing), but in hindsight this was a mistake since the assembly of the cable is quite difficult and error prone.
+ 
 ## features
 * Windows 10 IoT Core controlled
 * Six 7-segment 70mm (2.3") high displays
