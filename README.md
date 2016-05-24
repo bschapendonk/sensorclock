@@ -15,7 +15,7 @@ Everything is controlled thru I2C, except the RGB leds which use SPI, some GPIO'
 * [Board Bottom](/hardware/pdf/sensorclock_bottom.pdf)
 * [Gerbers](/hardware/gerber)
 
-## Things learned / Future improvements / Mistakes
+## things learned / improvements / mistakes
 * U2 has an invalid I2C address
  * [Workaround] Use ALLCALL to enable SUBADDR1 on all PCA9622's, then disable SUBADDR1 on the good addressed PCA9622's and use SUBADDR1 to address the wrong addressed U2
 * The MCP3425 and DS3231 have the same I2C address #fail
