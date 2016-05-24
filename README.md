@@ -8,6 +8,8 @@ Initially I only planned on the clock, but I ended up addeding a bunch of sensor
 
 Everything is controlled thru I2C, except the RGB leds which use SPI, some GPIO's for the rotary encoder, interrupts from the sensors and control lines to turn off the +3V3 (to reset all I2C devices). Basically any MCU that has I2C, SPI and some GPIO's can be used.
 
+* Raspberry Pi 3 works like a charm
+
 * [Schematic](/hardware/pdf/sensorclock.pdf)
 * [Board Top](/hardware/pdf/sensorclock_top.pdf)
 * [Board Bottom](/hardware/pdf/sensorclock_bottom.pdf)
@@ -15,10 +17,13 @@ Everything is controlled thru I2C, except the RGB leds which use SPI, some GPIO'
 
 **!!This is a work in progress, use at your own risk!!**
 
+## Things learned / Future improvements / Mistakes
 * U2 has an invalid I2C address
  * [Workaround] Use ALLCALL to enable SUBADDR1 on all PCA9622's, then disable SUBADDR1 on the good addressed PCA9622's and use SUBADDR1 to address the wrong addressed U2
 * The MCP3425 and DS3231 have the same I2C address #fail
  * [Workaround] For now I cut the SDA/SCL traces to the DS3231
+* The interconnect between te sensorclock and the Raspberrry Pi 2
+ * I used a custum header cable, but these are hard to assemble and the process is error prone
 
 ## features
 * Windows 10 IoT Core controlled
