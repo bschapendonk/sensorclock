@@ -8,14 +8,12 @@ Initially I only planned on the clock, but I ended up addeding a bunch of sensor
 
 Everything is controlled thru I2C, except the RGB leds which use SPI, some GPIO's for the rotary encoder, interrupts from the sensors and control lines to turn off the +3V3 (to reset all I2C devices). Basically any MCU that has I2C, SPI and some GPIO's can be used.
 
-* Raspberry Pi 3 works like a charm
+*The new Raspberry Pi 3 is pin compatible and runs even better*
 
 * [Schematic](/hardware/pdf/sensorclock.pdf)
 * [Board Top](/hardware/pdf/sensorclock_top.pdf)
 * [Board Bottom](/hardware/pdf/sensorclock_bottom.pdf)
 * [Gerbers](/hardware/gerber)
-
-**!!This is a work in progress, use at your own risk!!**
 
 ## Things learned / Future improvements / Mistakes
 * U2 has an invalid I2C address
@@ -48,6 +46,8 @@ Everything is controlled thru I2C, except the RGB leds which use SPI, some GPIO'
 * MQ-135 air quality sensor, ADC and loadswitch
  * MCP3425 [http://ww1.microchip.com/downloads/en/DeviceDoc/22072b.pdf]
  * AP2280 [http://www.diodes.com/_files/datasheets/AP2280.pdf]
+
+**!!This is a work in progress, use at your own risk!!**
 
 ## renders
 
