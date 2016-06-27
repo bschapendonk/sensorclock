@@ -60,7 +60,7 @@ namespace SensorClock
             //_shdn.Write(GpioPinValue.High);
 
             _heater = gpio.OpenPin(16);
-            _heater.Write(GpioPinValue.Low);
+            _heater.Write(GpioPinValue.High);
             _heater.SetDriveMode(GpioPinDriveMode.Output);
 
             _clock = new Clock();
@@ -72,8 +72,8 @@ namespace SensorClock
             _bme280 = new BME280();
             await _bme280.Init();
 
-            _timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(4));
-            _timer3 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick3, TimeSpan.FromMilliseconds(1000));
+            //_timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(4));
+            _timer3 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick3, TimeSpan.FromMinutes(1));
         }
 
         private void TaskInstance_Canceled(IBackgroundTaskInstance sender, BackgroundTaskCancellationReason reason)
