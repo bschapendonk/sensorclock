@@ -16,24 +16,22 @@ namespace SensorClock
 {
     public sealed class StartupTask : IBackgroundTask
     {
-        IBackgroundTaskInstance _taskInstance;
-        BackgroundTaskDeferral _deferral;
-
-        ThreadPoolTimer _timer2;
-        ThreadPoolTimer _timer3;
-
-        I2cDevice _mcp3425;
-        I2cDevice _tsl2561;
-        SpiDevice _spiDevice;
-        GpioPin _shdn;
-        GpioPin _heater;
-        int leds = 8;
-        byte[] endFrame;
-        int _color = 0;
-        bool _up = false;
-
-        Clock _clock;
-        BME280 _bme280;
+        private BME280 _bme280;
+        private byte _brightness = 0xE0 + 10;
+        private Clock _clock;
+        private int _color = 0;
+        private BackgroundTaskDeferral _deferral;
+        private GpioPin _heater;
+        private I2cDevice _mcp3425;
+        private GpioPin _shdn;
+        private SpiDevice _spiDevice;
+        private IBackgroundTaskInstance _taskInstance;
+        private ThreadPoolTimer _timer2;
+        private ThreadPoolTimer _timer3;
+        private I2cDevice _tsl2561;
+        private bool _up = false;
+        private byte[] endFrame;
+        private int leds = 8;
 
         public async void Run(IBackgroundTaskInstance taskInstance)
         {
@@ -72,16 +70,28 @@ namespace SensorClock
             _bme280 = new BME280();
             await _bme280.Init();
 
-            //_timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(4));
+            //_timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(20));
             _timer3 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick3, TimeSpan.FromMinutes(1));
         }
 
-        private void TaskInstance_Canceled(IBackgroundTaskInstance sender, BackgroundTaskCancellationReason reason)
+        private Color HsvToRgb(int h, byte s, byte v)
         {
-            _clock.Dispose();
-            _timer2.Cancel();
-            _timer3.Cancel();
-            _deferral.Complete();
+            var f = (h % 60) * 255 / 60;
+            var p = (255 - s) * v / 255;
+            var q = (255 - f * s / 255) * v / 255;
+            var t = (255 - (255 - f) * s / 255) * v / 255;
+            byte r = 0, g = 0, b = 0;
+            switch ((h / 60) % 6)
+            {
+                case 0: r = (byte)v; g = (byte)t; b = (byte)p; break;
+                case 1: r = (byte)q; g = (byte)v; b = (byte)p; break;
+                case 2: r = (byte)p; g = (byte)v; b = (byte)t; break;
+                case 3: r = (byte)p; g = (byte)q; b = (byte)v; break;
+                case 4: r = (byte)t; g = (byte)p; b = (byte)v; break;
+                case 5: r = (byte)v; g = (byte)p; b = (byte)q; break;
+            }
+
+            return Color.FromArgb(255, r, g, b);
         }
 
         private async Task Init()
@@ -126,7 +136,13 @@ namespace SensorClock
             _spiDevice.Write(endFrame);
         }
 
-        private byte _brightness = 0xE0 + 10;
+        private void TaskInstance_Canceled(IBackgroundTaskInstance sender, BackgroundTaskCancellationReason reason)
+        {
+            _clock.Dispose();
+            _timer2.Cancel();
+            _timer3.Cancel();
+            _deferral.Complete();
+        }
 
         private void Timer_Tick2(ThreadPoolTimer timer)
         {
@@ -138,7 +154,6 @@ namespace SensorClock
                     _spiDevice.Write(new byte[4]);
                     for (var i = 0; i < 8; i++)
                     {
-
                         _spiDevice.Write(new byte[] { _brightness, color.B, color.G, color.R });
                     }
                     _spiDevice.Write(endFrame);
@@ -148,7 +163,6 @@ namespace SensorClock
                 }
                 catch (Exception)
                 {
-
                 }
             }
         }
@@ -194,26 +208,6 @@ namespace SensorClock
                 var apikey = "";
                 var result = client.GetAsync($"https://api.thingspeak.com/update?api_key={apikey}&field1={temperature}&field2={pressure}&field3={humidity}&field4={lux}&field5={adc}").Result;
             }
-        }
-
-        Color HsvToRgb(int h, byte s, byte v)
-        {
-            var f = (h % 60) * 255 / 60;
-            var p = (255 - s) * v / 255;
-            var q = (255 - f * s / 255) * v / 255;
-            var t = (255 - (255 - f) * s / 255) * v / 255;
-            byte r = 0, g = 0, b = 0;
-            switch ((h / 60) % 6)
-            {
-                case 0: r = (byte)v; g = (byte)t; b = (byte)p; break;
-                case 1: r = (byte)q; g = (byte)v; b = (byte)p; break;
-                case 2: r = (byte)p; g = (byte)v; b = (byte)t; break;
-                case 3: r = (byte)p; g = (byte)q; b = (byte)v; break;
-                case 4: r = (byte)t; g = (byte)p; b = (byte)v; break;
-                case 5: r = (byte)v; g = (byte)p; b = (byte)q; break;
-            }
-
-            return Color.FromArgb(255, r, g, b);
         }
     }
 }
