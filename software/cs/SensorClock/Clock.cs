@@ -11,42 +11,37 @@ namespace SensorClock
     /// 16-bit Fm+ I2C-bus 100 mA 40 V LED driver
     /// http://www.nxp.com/documents/data_sheet/PCA9622.pdf
     /// </summary>
-    class Clock : IDisposable
+    internal class Clock : IDisposable
     {
-        const byte PWM_DEFAULT = 0x44;
-        const byte PWM_DIMM = 0x01;
-        const int DIMM_HOUR_BEGIN = 22;
-        const int DIMM_HOUR_END = 8;
-
-        const byte ADDR_ALLCALL = 0x70;
-        const byte ADDR_HOUR = 0x71;
-        const byte ADDR_MINUTE = 0x01;
-        const byte ADDR_SECOND = 0x02;
-
-        const byte AUTO_INCREMENT = 0x80;
-        const byte REGISTER_MODE1 = 0x00;
-        const byte REGISTER_PWM0 = 0x02;
-        const byte REGISTER_GRPPWM = 0x12;
-        const byte REGISTER_LEDOUT0 = 0x14;
-
-        const byte MODE1_SLEEP = 0x10;
-        const byte MODE1_SUBADDR1 = 0x08;
-        const byte MODE1_ALLCALL = 0x01;
-
-        I2cDevice _allcall;
-        I2cDevice _hour;
-        I2cDevice _minute;
-        I2cDevice _second;
-
-        const I2cBusSpeed BUSSPEED = I2cBusSpeed.FastMode;
-
-        ThreadPoolTimer _timer;
-        int _secondDisplayed = int.MaxValue;
-        int _hourDisplayed = int.MaxValue;
-        int _minuteDisplayed = int.MaxValue;
+        private const byte ADDR_ALLCALL = 0x70;
+        private const byte ADDR_HOUR = 0x71;
+        private const byte ADDR_MINUTE = 0x01;
+        private const byte ADDR_SECOND = 0x02;
+        private const byte AUTO_INCREMENT = 0x80;
+        private const I2cBusSpeed BUSSPEED = I2cBusSpeed.FastMode;
+        private const int DIMM_HOUR_BEGIN = 22;
+        private const int DIMM_HOUR_END = 8;
+        private const byte MODE1_ALLCALL = 0x01;
+        private const byte MODE1_SLEEP = 0x10;
+        private const byte MODE1_SUBADDR1 = 0x08;
+        private const byte PWM_DEFAULT = 0x44;
+        private const byte PWM_DIMM = 0x01;
+        private const byte REGISTER_GRPPWM = 0x12;
+        private const byte REGISTER_LEDOUT0 = 0x14;
+        private const byte REGISTER_MODE1 = 0x00;
+        private const byte REGISTER_PWM0 = 0x02;
+        private I2cDevice _allcall;
+        private I2cDevice _hour;
+        private int _hourDisplayed = int.MaxValue;
+        private I2cDevice _minute;
+        private int _minuteDisplayed = int.MaxValue;
+        private I2cDevice _second;
+        private int _secondDisplayed = int.MaxValue;
+        private ThreadPoolTimer _timer;
 
         #region Mask
-        static readonly byte[][] DIGITS = {
+
+        private static readonly byte[][] DIGITS = {
             new byte[]{ REGISTER_PWM0 | AUTO_INCREMENT, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
             new byte[]{ REGISTER_PWM0 | AUTO_INCREMENT, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00 },
             new byte[]{ REGISTER_PWM0 | AUTO_INCREMENT, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0xFF, 0xFF },
@@ -148,7 +143,30 @@ namespace SensorClock
             new byte[]{ REGISTER_PWM0 | AUTO_INCREMENT, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
             new byte[]{ REGISTER_PWM0 | AUTO_INCREMENT, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00 }
         };
-        #endregion
+
+        #endregion Mask
+
+        public void Dispose()
+        {
+            if (_timer != null)
+                _timer.Cancel();
+
+            if (_hour != null)
+                _hour.Dispose();
+
+            if (_minute != null)
+                _minute.Dispose();
+
+            if (_second != null)
+                _second.Dispose();
+
+            _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00 });
+            _allcall.Write(new byte[] { REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
+            _allcall.Write(new byte[] { REGISTER_MODE1, MODE1_SLEEP | MODE1_ALLCALL });
+
+            if (_allcall != null)
+                _allcall.Dispose();
+        }
 
         public async Task Init()
         {
@@ -171,14 +189,26 @@ namespace SensorClock
             _second.Write(new byte[] { REGISTER_MODE1, MODE1_ALLCALL });
         }
 
+        public async Task Reset()
+        {
+            var deviceSelector = I2cDevice.GetDeviceSelector();
+            var controllers = await DeviceInformation.FindAllAsync(deviceSelector);
+            using (var pca9622 = await I2cDevice.FromIdAsync(controllers[0].Id, new I2cConnectionSettings(0x06) { BusSpeed = I2cBusSpeed.StandardMode }))
+            {
+                pca9622.Write(new byte[] { 0xA5 });
+                pca9622.Write(new byte[] { 0x5A });
+            }
+            Task.Delay(10).GetAwaiter().GetResult();
+        }
+
         public void Start()
         {
             _timer = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick, TimeSpan.FromMilliseconds(500));
         }
 
-        void Timer_Tick(ThreadPoolTimer timer)
+        private void Timer_Tick(ThreadPoolTimer timer)
         {
-            var now =  DateTime.Now;
+            var now = DateTime.Now;
             if (_second != null)
             {
                 var second = new byte[17];
@@ -214,40 +244,6 @@ namespace SensorClock
                     }
                 }
             }
-        }
-
-        public async Task Reset()
-        {
-            var deviceSelector = I2cDevice.GetDeviceSelector();
-            var controllers = await DeviceInformation.FindAllAsync(deviceSelector);
-            using (var pca9622 = await I2cDevice.FromIdAsync(controllers[0].Id, new I2cConnectionSettings(0x06) { BusSpeed = I2cBusSpeed.StandardMode }))
-            {
-                pca9622.Write(new byte[] { 0xA5 });
-                pca9622.Write(new byte[] { 0x5A });
-            }
-            Task.Delay(10).GetAwaiter().GetResult();
-        }
-
-        public void Dispose()
-        {
-            if (_timer != null)
-                _timer.Cancel();
-
-            if (_hour != null)
-                _hour.Dispose();
-
-            if (_minute != null)
-                _minute.Dispose();
-
-            if (_second != null)
-                _second.Dispose();
-
-            _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00 });
-            _allcall.Write(new byte[] { REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
-            _allcall.Write(new byte[] { REGISTER_MODE1, MODE1_SLEEP | MODE1_ALLCALL });
-
-            if (_allcall != null)
-                _allcall.Dispose();
         }
     }
 }

@@ -106,10 +106,11 @@ namespace SensorClock
             _tsl2561.Write(new byte[] { 0x80, 0x03 }); // power on :)
 
             // spi stuff
-            var settings = new SpiConnectionSettings(0);
-            settings.ClockFrequency = 10000000;
-            settings.Mode = SpiMode.Mode0;
-
+            var settings = new SpiConnectionSettings(0)
+            {
+                ClockFrequency = 10000000,
+                Mode = SpiMode.Mode0
+            };
             string spiAqs = SpiDevice.GetDeviceSelector("SPI0");
             var deviceInformation = await DeviceInformation.FindAllAsync(spiAqs);
             _spiDevice = await SpiDevice.FromIdAsync(deviceInformation[0].Id, settings);

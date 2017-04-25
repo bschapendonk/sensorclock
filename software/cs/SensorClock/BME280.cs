@@ -10,41 +10,57 @@ namespace SensorClock
     /// Combined humidity and pressure sensor
     /// https://ae-bst.resource.bosch.com/media/products/dokumente/bme280/BST-BME280_DS001-11.pdf
     /// </summary>
-    class BME280 : IDisposable
+    internal class BME280 : IDisposable
     {
-        const byte ADDR = 0x77;
+        private const byte ADDR = 0x77;
 
-        const byte REGISTER_CTRL_HUM = 0xF2;
-        const byte REGISTER_CTRL_MEAS = 0xF4;
-        const byte REGISTER_CONFIG = 0xF5;
-        const byte REGISTER_ID = 0xD0;
-        const byte REGISTER_DIG_T1 = 0x88;
-        const byte REGISTER_DIG_H1 = 0xA1;
-        const byte REGISTER_DIG_H2 = 0xE1;
-        const byte REGISTER_HUM_LSB = 0xF7;
+        private const byte CHIP_ID = 0x60;
+        private const byte CONFIG_FILTER = 0x10;
+        private const byte CONFIG_TSB = 0x80;
+        private const byte CTRL_HUM_OSRS_H = 0x01;
+        private const byte CTRL_MEAS_MODE = 0x03;
 
-        const byte CTRL_HUM_OSRS_H = 0x01; // Humidity oversampling ×1
-        const byte CTRL_MEAS_OSRS_P = 0x14; // Pressure oversampling ×16
-        const byte CTRL_MEAS_OSRS_T = 0x40; // Temperature oversampling ×2
-        const byte CTRL_MEAS_MODE = 0x03; // Mode normal
-        const byte CONFIG_TSB = 0x80; // 500ms
-        const byte CONFIG_FILTER = 0x10; // 16
+        // Humidity oversampling ×1
+        private const byte CTRL_MEAS_OSRS_P = 0x14;
 
-        const byte CHIP_ID = 0x60;
+        // Pressure oversampling ×16
+        private const byte CTRL_MEAS_OSRS_T = 0x40;
 
-        #region  Compensation parameters
-        ushort dig_T1, dig_P1;
-        short dig_T2, dig_T3, dig_P2, dig_P3, dig_P4, dig_P5, dig_P6, dig_P7, dig_P8, dig_P9, dig_H2, dig_H4, dig_H5;
-        byte dig_H1, dig_H3;
-        sbyte dig_H6;
-        int t_fine;
-        #endregion
+        private const byte REGISTER_CONFIG = 0xF5;
+        private const byte REGISTER_CTRL_HUM = 0xF2;
+        private const byte REGISTER_CTRL_MEAS = 0xF4;
+        private const byte REGISTER_DIG_H1 = 0xA1;
+        private const byte REGISTER_DIG_H2 = 0xE1;
+        private const byte REGISTER_DIG_T1 = 0x88;
+        private const byte REGISTER_HUM_LSB = 0xF7;
+        private const byte REGISTER_ID = 0xD0;
+        // Temperature oversampling ×2
+        // Mode normal
+        // 500ms
+        // 16
 
-        I2cDevice _bme280;
+        #region Compensation parameters
 
-        public double Temperature { get; private set; }
-        public double Pressure { get; private set; }
+        private byte dig_H1, dig_H3;
+        private sbyte dig_H6;
+        private ushort dig_T1, dig_P1;
+        private short dig_T2, dig_T3, dig_P2, dig_P3, dig_P4, dig_P5, dig_P6, dig_P7, dig_P8, dig_P9, dig_H2, dig_H4, dig_H5;
+        private int t_fine;
+
+        #endregion Compensation parameters
+
+        private I2cDevice _bme280;
+
         public double Humidity { get; private set; }
+        public double Pressure { get; private set; }
+        public double Temperature { get; private set; }
+
+        public void Dispose()
+        {
+            // todo put device in low power mode
+            if (_bme280 != null)
+                _bme280.Dispose();
+        }
 
         public async Task Init()
         {
@@ -61,15 +77,49 @@ namespace SensorClock
             _bme280.Write(new byte[] { REGISTER_CONFIG, CONFIG_TSB | CONFIG_FILTER });
         }
 
-        void ValidateChipId()
+        public void Sample()
         {
-            var id = new byte[1];
-            _bme280.WriteRead(new byte[] { REGISTER_ID }, id);
-            if (id[0] != CHIP_ID)
-                throw new Exception("Incorrect chip_id");
+            var buffer = new byte[8];
+            _bme280.WriteRead(new byte[] { REGISTER_HUM_LSB }, buffer);
+
+            Temperature = BME280_compensate_T_double(ReadSignedInteger(buffer, 3));
+            Pressure = BME280_compensate_P_double(ReadSignedInteger(buffer, 0));
+            Humidity = BME280_compensate_H_double(ReadSignedShort(buffer, 6));
         }
 
-        void SetTrimmingParamaters()
+        private int ReadSignedInteger(byte[] buffer, int offset)
+        {
+            if (offset + 2 >= buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+
+            return (buffer[offset] << 12) + (buffer[offset + 1] << 4) + (buffer[offset + 2] >> 4);
+        }
+
+        private int ReadSignedShort(byte[] buffer, int offset = 0)
+        {
+            if (offset + 1 >= buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+
+            return (buffer[offset] << 8) + buffer[offset + 1];
+        }
+
+        private short ReadSignedShortLittleEndian(byte[] buffer, int offset = 0)
+        {
+            if (offset + 1 >= buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+
+            return (short)((buffer[offset + 1] << 8) + buffer[offset]);
+        }
+
+        private ushort ReadUnsignedShortLittleEndian(byte[] buffer, int offset = 0)
+        {
+            if (offset + 1 >= buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+
+            return (ushort)((buffer[offset + 1] << 8) + buffer[offset]);
+        }
+
+        private void SetTrimmingParamaters()
         {
             var buffer = new byte[25];
             _bme280.WriteRead(new byte[] { REGISTER_DIG_T1 }, buffer);
@@ -103,64 +153,32 @@ namespace SensorClock
             dig_H6 = (sbyte)buffer[6];
         }
 
-        public void Sample()
+        private void ValidateChipId()
         {
-            var buffer = new byte[8];
-            _bme280.WriteRead(new byte[] { REGISTER_HUM_LSB }, buffer);
-
-            Temperature = BME280_compensate_T_double(ReadSignedInteger(buffer, 3));
-            Pressure = BME280_compensate_P_double(ReadSignedInteger(buffer, 0));
-            Humidity = BME280_compensate_H_double(ReadSignedShort(buffer, 6));
-        }
-
-        int ReadSignedInteger(byte[] buffer, int offset)
-        {
-            if (offset + 2 >= buffer.Length)
-                throw new ArgumentOutOfRangeException(nameof(offset));
-
-            return (buffer[offset] << 12) + (buffer[offset + 1] << 4) + (buffer[offset + 2] >> 4);
-        }
-
-        int ReadSignedShort(byte[] buffer, int offset = 0)
-        {
-            if (offset + 1 >= buffer.Length)
-                throw new ArgumentOutOfRangeException(nameof(offset));
-
-            return (buffer[offset] << 8) + buffer[offset + 1];
-        }
-
-        short ReadSignedShortLittleEndian(byte[] buffer, int offset = 0)
-        {
-            if (offset + 1 >= buffer.Length)
-                throw new ArgumentOutOfRangeException(nameof(offset));
-
-            return (short)((buffer[offset + 1] << 8) + buffer[offset]);
-        }
-
-        ushort ReadUnsignedShortLittleEndian(byte[] buffer, int offset = 0)
-        {
-            if (offset + 1 >= buffer.Length)
-                throw new ArgumentOutOfRangeException(nameof(offset));
-
-            return (ushort)((buffer[offset + 1] << 8) + buffer[offset]);
+            var id = new byte[1];
+            _bme280.WriteRead(new byte[] { REGISTER_ID }, id);
+            if (id[0] != CHIP_ID)
+                throw new Exception("Incorrect chip_id");
         }
 
         #region Compensation formulas straight from the datasheet
 
-        // Returns temperature in DegC, double precision. Output value of “51.23” equals 51.23 DegC.
-        // t_fine carries fine temperature as global value
-        double BME280_compensate_T_double(int adc_T)
+        // Returns humidity in %rH as as double. Output value of “46.332” represents 46.332 %rH
+        private double BME280_compensate_H_double(int adc_H)
         {
-            double var1, var2, T;
-            var1 = ((adc_T) / 16384.0 - (dig_T1) / 1024.0) * (dig_T2);
-            var2 = (((adc_T) / 131072.0 - (dig_T1) / 8192.0) * ((adc_T) / 131072.0 - (dig_T1) / 8192.0)) * (dig_T3);
-            t_fine = (int)(var1 + var2);
-            T = (var1 + var2) / 5120.0;
-            return T;
+            double var_H;
+            var_H = ((t_fine) - 76800.0);
+            var_H = (adc_H - ((dig_H4) * 64.0 + (dig_H5) / 16384.0 * var_H)) * ((dig_H2) / 65536.0 * (1.0 + (dig_H6) / 67108864.0 * var_H * (1.0 + (dig_H3) / 67108864.0 * var_H)));
+            var_H = var_H * (1.0 - (dig_H1) * var_H / 524288.0);
+            if (var_H > 100.0)
+                var_H = 100.0;
+            else if (var_H < 0.0)
+                var_H = 0.0;
+            return var_H;
         }
 
         // Returns pressure in Pa as double. Output value of “96386.2” equals 96386.2 Pa = 963.862 hPa
-        double BME280_compensate_P_double(int adc_P)
+        private double BME280_compensate_P_double(int adc_P)
         {
             double var1, var2, p;
             var1 = (t_fine / 2.0) - 64000.0;
@@ -181,27 +199,18 @@ namespace SensorClock
             return p;
         }
 
-        // Returns humidity in %rH as as double. Output value of “46.332” represents 46.332 %rH
-        double BME280_compensate_H_double(int adc_H)
+        // Returns temperature in DegC, double precision. Output value of “51.23” equals 51.23 DegC.
+        // t_fine carries fine temperature as global value
+        private double BME280_compensate_T_double(int adc_T)
         {
-            double var_H;
-            var_H = ((t_fine) - 76800.0);
-            var_H = (adc_H - ((dig_H4) * 64.0 + (dig_H5) / 16384.0 * var_H)) * ((dig_H2) / 65536.0 * (1.0 + (dig_H6) / 67108864.0 * var_H * (1.0 + (dig_H3) / 67108864.0 * var_H)));
-            var_H = var_H * (1.0 - (dig_H1) * var_H / 524288.0);
-            if (var_H > 100.0)
-                var_H = 100.0;
-            else if (var_H < 0.0)
-                var_H = 0.0;
-            return var_H;
+            double var1, var2, T;
+            var1 = ((adc_T) / 16384.0 - (dig_T1) / 1024.0) * (dig_T2);
+            var2 = (((adc_T) / 131072.0 - (dig_T1) / 8192.0) * ((adc_T) / 131072.0 - (dig_T1) / 8192.0)) * (dig_T3);
+            t_fine = (int)(var1 + var2);
+            T = (var1 + var2) / 5120.0;
+            return T;
         }
 
-        #endregion
-
-        public void Dispose()
-        {
-            // todo put device in low power mode
-            if (_bme280 != null)
-                _bme280.Dispose();
-        }
+        #endregion Compensation formulas straight from the datasheet
     }
 }
