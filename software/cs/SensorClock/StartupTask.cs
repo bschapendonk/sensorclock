@@ -17,9 +17,18 @@ namespace SensorClock
     public sealed class StartupTask : IBackgroundTask
     {
         private BME280 _bme280;
-        private byte _brightness = 0xE0 + 31;
+        private byte _brightness = 0xE0 | 31;
         private Clock _clock;
-        private int _color = 0;
+        private int _hue = 0;
+
+        private int _hue1 = 0;
+        private int _hue2 = 45;
+        private int _hue3 = 90;
+        private int _hue4 = 135;
+        private int _hue5 = 180;
+        private int _hue6 = 225;
+        private int _hue7 = 270;
+        private int _hue8 = 315;
         private BackgroundTaskDeferral _deferral;
         private GpioPin _heater;
         private I2cDevice _mcp3425;
@@ -70,7 +79,7 @@ namespace SensorClock
             _bme280 = new BME280();
             await _bme280.Init();
 
-            _timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(20));
+            _timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(50));
             _timer3 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick3, TimeSpan.FromMinutes(1));
         }
 
@@ -144,17 +153,54 @@ namespace SensorClock
             {
                 try
                 {
-                    var color = HsvToRgb(_color, 255, 255);
                     var buffer = new byte[4 + (leds * 4) + endFrame.Length];
-                    for (var i = 0; i < leds; i++)
-                    {
-                        Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 4 + (4 * i), 4);
-                    }
+
+                    var color = HsvToRgb(_hue1, 255, 255);
+                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 4, 4);
+                    color = HsvToRgb(_hue2, 255, 255);
+                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 8, 4);
+                    color = HsvToRgb(_hue3, 255, 255);
+                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 12, 4);
+                    color = HsvToRgb(_hue4, 255, 255);
+                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 16, 4);
+                    color = HsvToRgb(_hue5, 255, 255);
+                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 20, 4);
+                    color = HsvToRgb(_hue6, 255, 255);
+                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 24, 4);
+                    color = HsvToRgb(_hue7, 255, 255);
+                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 28, 4);
+                    color = HsvToRgb(_hue8, 255, 255);
+                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 32, 4);
+
                     Buffer.BlockCopy(endFrame, 0, buffer, 4 + (leds * 4), endFrame.Length);
                     _spiDevice.Write(buffer);
-                    _color++;
-                    if (_color >= 360)
-                        _color = 0;
+
+                    _hue1 += 5;
+                    if (_hue1 >= 360)
+                        _hue1 = 0;
+                    _hue2 += 5;
+                    if (_hue2 >= 360)
+                        _hue2 = 0;
+                    _hue3 += 5;
+                    if (_hue3 >= 360)
+                        _hue3 = 0;
+                    _hue4 += 5;
+                    if (_hue4 >= 360)
+                        _hue4 = 0;
+                    _hue5 += 5;
+                    if (_hue5 >= 360)
+                        _hue5 = 0;
+                    _hue6 += 5;
+                    if (_hue6 >= 360)
+                        _hue6 = 0;
+                    _hue7 += 5;
+                    if (_hue7 >= 360)
+                        _hue7 = 0;
+                    _hue8 += 5;
+                    if (_hue8 >= 360)
+                        _hue8 = 0;
+
+
                 }
                 catch (Exception)
                 {
