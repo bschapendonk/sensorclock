@@ -17,7 +17,7 @@ namespace SensorClock
     public sealed class StartupTask : IBackgroundTask
     {
         private BME280 _bme280;
-        private byte _brightness = 0xE0 + 10;
+        private byte _brightness = 0xE0 + 31;
         private Clock _clock;
         private int _color = 0;
         private BackgroundTaskDeferral _deferral;
@@ -70,7 +70,7 @@ namespace SensorClock
             _bme280 = new BME280();
             await _bme280.Init();
 
-            //_timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(20));
+            _timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(20));
             _timer3 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick3, TimeSpan.FromMinutes(1));
         }
 
@@ -120,21 +120,14 @@ namespace SensorClock
                 endFrame[i] = 0x0;
             }
 
-            // start
-            _spiDevice.Write(new byte[4]);
+            var buffer = new byte[4 + (leds * 4) + endFrame.Length];
+            for (var i = 0; i < leds; i++)
+            {
+                Buffer.BlockCopy(new byte[] { 0xE0, 0x0, 0x0, 0x0 }, 0, buffer, 4 + (4 * i), 4);
+            }
+            Buffer.BlockCopy(endFrame, 0, buffer, 4 + (leds * 4), endFrame.Length);
 
-            // all off
-            _spiDevice.Write(new byte[] { 0xE0, 0x0, 0x0, 0x0 });
-            _spiDevice.Write(new byte[] { 0xE0, 0x0, 0x0, 0x0 });
-            _spiDevice.Write(new byte[] { 0xE0, 0x0, 0x0, 0x0 });
-            _spiDevice.Write(new byte[] { 0xE0, 0x0, 0x0, 0x0 });
-            _spiDevice.Write(new byte[] { 0xE0, 0x0, 0x0, 0x0 });
-            _spiDevice.Write(new byte[] { 0xE0, 0x0, 0x0, 0x0 });
-            _spiDevice.Write(new byte[] { 0xE0, 0x0, 0x0, 0x0 });
-            _spiDevice.Write(new byte[] { 0xE0, 0x0, 0x0, 0x0 });
-
-            // end
-            _spiDevice.Write(endFrame);
+            _spiDevice.Write(buffer);
         }
 
         private void TaskInstance_Canceled(IBackgroundTaskInstance sender, BackgroundTaskCancellationReason reason)
@@ -152,12 +145,13 @@ namespace SensorClock
                 try
                 {
                     var color = HsvToRgb(_color, 255, 255);
-                    _spiDevice.Write(new byte[4]);
-                    for (var i = 0; i < 8; i++)
+                    var buffer = new byte[4 + (leds * 4) + endFrame.Length];
+                    for (var i = 0; i < leds; i++)
                     {
-                        _spiDevice.Write(new byte[] { _brightness, color.B, color.G, color.R });
+                        Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 4 + (4 * i), 4);
                     }
-                    _spiDevice.Write(endFrame);
+                    Buffer.BlockCopy(endFrame, 0, buffer, 4 + (leds * 4), endFrame.Length);
+                    _spiDevice.Write(buffer);
                     _color++;
                     if (_color >= 360)
                         _color = 0;
