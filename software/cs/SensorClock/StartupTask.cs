@@ -79,7 +79,7 @@ namespace SensorClock
             _bme280 = new BME280();
             await _bme280.Init();
 
-            _timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(10));
+            _timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(5));
             _timer3 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick3, TimeSpan.FromMinutes(1));
         }
 
@@ -176,28 +176,28 @@ namespace SensorClock
                     _spiDevice.Write(buffer);
 
                     _hue1 += 1;
-                    if (_hue1 > 360)
+                    if (_hue1 >= 360)
                         _hue1 = 0;
                     _hue2 += 1;
-                    if (_hue2 > 360)
+                    if (_hue2 >= 360)
                         _hue2 = 0;
                     _hue3 += 1;
-                    if (_hue3 > 360)
+                    if (_hue3 >= 360)
                         _hue3 = 0;
                     _hue4 += 1;
-                    if (_hue4 > 360)
+                    if (_hue4 >= 360)
                         _hue4 = 0;
                     _hue5 += 1;
-                    if (_hue5 > 360)
+                    if (_hue5 >= 360)
                         _hue5 = 0;
                     _hue6 += 1;
-                    if (_hue6 > 360)
+                    if (_hue6 >= 360)
                         _hue6 = 0;
                     _hue7 += 1;
-                    if (_hue7 > 360)
+                    if (_hue7 >= 360)
                         _hue7 = 0;
                     _hue8 += 1;
-                    if (_hue8 > 360)
+                    if (_hue8 >= 360)
                         _hue8 = 0;
 
 
