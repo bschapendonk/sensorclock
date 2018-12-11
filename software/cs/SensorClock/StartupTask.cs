@@ -17,9 +17,9 @@ namespace SensorClock
     public sealed class StartupTask : IBackgroundTask
     {
         private BME280 _bme280;
-        private byte _brightness = 0xE0 | 31;
+        private readonly byte _brightness = 0xE0 | 31;
         private Clock _clock;
-        private int _hue = 0;
+        private readonly int _hue = 0;
 
         private int _hue1 = 0;
         private int _hue2 = 45;
@@ -32,15 +32,16 @@ namespace SensorClock
         private BackgroundTaskDeferral _deferral;
         private GpioPin _heater;
         private I2cDevice _mcp3425;
-        private GpioPin _shdn;
+        private readonly GpioPin _shdn;
         private SpiDevice _spiDevice;
         private IBackgroundTaskInstance _taskInstance;
         private ThreadPoolTimer _timer2;
         private ThreadPoolTimer _timer3;
         private I2cDevice _tsl2561;
-        private bool _up = false;
+        private readonly bool _up = false;
         private byte[] endFrame;
-        private int leds = 8;
+        private readonly int leds = 8;
+        private byte[] buffer;
 
         public async void Run(IBackgroundTaskInstance taskInstance)
         {
@@ -80,7 +81,7 @@ namespace SensorClock
             await _bme280.Init();
 
             //_timer2 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick2, TimeSpan.FromMilliseconds(5));
-            _timer3 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick3, TimeSpan.FromMinutes(1));
+            //_timer3 = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick3, TimeSpan.FromMinutes(1));
         }
 
         private Color HsvToRgb(int h, byte s, byte v)
@@ -92,12 +93,12 @@ namespace SensorClock
             byte r = 0, g = 0, b = 0;
             switch ((h / 60) % 6)
             {
-                case 0: r = (byte)v; g = (byte)t; b = (byte)p; break;
-                case 1: r = (byte)q; g = (byte)v; b = (byte)p; break;
-                case 2: r = (byte)p; g = (byte)v; b = (byte)t; break;
-                case 3: r = (byte)p; g = (byte)q; b = (byte)v; break;
-                case 4: r = (byte)t; g = (byte)p; b = (byte)v; break;
-                case 5: r = (byte)v; g = (byte)p; b = (byte)q; break;
+                case 0: r = v; g = (byte)t; b = (byte)p; break;
+                case 1: r = (byte)q; g = v; b = (byte)p; break;
+                case 2: r = (byte)p; g = v; b = (byte)t; break;
+                case 3: r = (byte)p; g = (byte)q; b = v; break;
+                case 4: r = (byte)t; g = (byte)p; b = v; break;
+                case 5: r = v; g = (byte)p; b = (byte)q; break;
             }
 
             return Color.FromArgb(255, r, g, b);
@@ -129,7 +130,7 @@ namespace SensorClock
                 endFrame[i] = 0x0;
             }
 
-            var buffer = new byte[4 + (leds * 4) + endFrame.Length];
+            buffer = new byte[4 + (leds * 4) + endFrame.Length];
             for (var i = 0; i < leds; i++)
             {
                 Buffer.BlockCopy(new byte[] { 0xE0, 0x0, 0x0, 0x0 }, 0, buffer, 4 + (4 * i), 4);
@@ -149,57 +150,68 @@ namespace SensorClock
 
         private void Timer_Tick2(ThreadPoolTimer timer)
         {
+            var hour = DateTime.Now.Hour;
             if (_spiDevice != null)
             {
                 try
                 {
-                    var buffer = new byte[4 + (leds * 4) + endFrame.Length];
+                    if (hour < 18 || hour >= 8)
+                    {
+                        for (var i = 0; i < leds; i++)
+                        {
+                            Buffer.BlockCopy(new byte[] { 0xE0, 0x0, 0x0, 0x0 }, 0, buffer, 4 + (4 * i), 4);
+                        }
+                        Buffer.BlockCopy(endFrame, 0, buffer, 4 + (leds * 4), endFrame.Length);
 
-                    var color = HsvToRgb(_hue1, 255, 255);
-                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 4, 4);
-                    color = HsvToRgb(_hue2, 255, 255);
-                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 8, 4);
-                    color = HsvToRgb(_hue3, 255, 255);
-                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 12, 4);
-                    color = HsvToRgb(_hue4, 255, 255);
-                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 16, 4);
-                    color = HsvToRgb(_hue5, 255, 255);
-                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 20, 4);
-                    color = HsvToRgb(_hue6, 255, 255);
-                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 24, 4);
-                    color = HsvToRgb(_hue7, 255, 255);
-                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 28, 4);
-                    color = HsvToRgb(_hue8, 255, 255);
-                    Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 32, 4);
+                        _spiDevice.Write(buffer);
+                    }
+                    else
+                    {
+                        var color = HsvToRgb(_hue1, 255, 255);
+                        Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 4, 4);
+                        color = HsvToRgb(_hue2, 255, 255);
+                        Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 8, 4);
+                        color = HsvToRgb(_hue3, 255, 255);
+                        Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 12, 4);
+                        color = HsvToRgb(_hue4, 255, 255);
+                        Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 16, 4);
+                        color = HsvToRgb(_hue5, 255, 255);
+                        Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 20, 4);
+                        color = HsvToRgb(_hue6, 255, 255);
+                        Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 24, 4);
+                        color = HsvToRgb(_hue7, 255, 255);
+                        Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 28, 4);
+                        color = HsvToRgb(_hue8, 255, 255);
+                        Buffer.BlockCopy(new byte[] { _brightness, color.B, color.G, color.R }, 0, buffer, 32, 4);
 
-                    Buffer.BlockCopy(endFrame, 0, buffer, 4 + (leds * 4), endFrame.Length);
-                    _spiDevice.Write(buffer);
+                        Buffer.BlockCopy(endFrame, 0, buffer, 4 + (leds * 4), endFrame.Length);
+                        _spiDevice.Write(buffer);
 
-                    _hue1 += 1;
-                    if (_hue1 >= 360)
-                        _hue1 = 0;
-                    _hue2 += 1;
-                    if (_hue2 >= 360)
-                        _hue2 = 0;
-                    _hue3 += 1;
-                    if (_hue3 >= 360)
-                        _hue3 = 0;
-                    _hue4 += 1;
-                    if (_hue4 >= 360)
-                        _hue4 = 0;
-                    _hue5 += 1;
-                    if (_hue5 >= 360)
-                        _hue5 = 0;
-                    _hue6 += 1;
-                    if (_hue6 >= 360)
-                        _hue6 = 0;
-                    _hue7 += 1;
-                    if (_hue7 >= 360)
-                        _hue7 = 0;
-                    _hue8 += 1;
-                    if (_hue8 >= 360)
-                        _hue8 = 0;
-
+                        _hue1 += 1;
+                        if (_hue1 >= 360)
+                            _hue1 = 0;
+                        _hue2 += 1;
+                        if (_hue2 >= 360)
+                            _hue2 = 0;
+                        _hue3 += 1;
+                        if (_hue3 >= 360)
+                            _hue3 = 0;
+                        _hue4 += 1;
+                        if (_hue4 >= 360)
+                            _hue4 = 0;
+                        _hue5 += 1;
+                        if (_hue5 >= 360)
+                            _hue5 = 0;
+                        _hue6 += 1;
+                        if (_hue6 >= 360)
+                            _hue6 = 0;
+                        _hue7 += 1;
+                        if (_hue7 >= 360)
+                            _hue7 = 0;
+                        _hue8 += 1;
+                        if (_hue8 >= 360)
+                            _hue8 = 0;
+                    }
 
                 }
                 catch (Exception)
