@@ -7,9 +7,9 @@
             name: "*"
             state: latest
 
-        # - ansible.builtin.apt:
-        #     pkg:
-        #       - dotnet-sdk-5.0
+        - ansible.builtin.apt:
+            pkg:
+              - git
 
         - ansible.builtin.apt:
             autoremove: yes
