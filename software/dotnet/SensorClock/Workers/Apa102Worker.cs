@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace dotnet
+namespace SensorClock.Workers
 {
     /// <summary>
     /// Temporary, for now makes sure all APA102 are off

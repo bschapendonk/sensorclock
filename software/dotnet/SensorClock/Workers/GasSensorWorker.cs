@@ -4,7 +4,7 @@ using System.Device.Gpio;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace dotnet
+namespace SensorClock.Workers
 {
     /// <summary>
     /// Temporary, for now makes sure RPI GPIO pin 16 is LOW, eg. disabling the heater
