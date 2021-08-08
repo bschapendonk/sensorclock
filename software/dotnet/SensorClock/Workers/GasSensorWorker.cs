@@ -27,7 +27,7 @@ namespace SensorClock.Workers
 
         private void Init()
         {
-            _controller = new GpioController(PinNumberingScheme.Board);
+            _controller = new GpioController();
             _controller.OpenPin(16, PinMode.Output);
             _controller.Write(16, PinValue.Low);
         }
