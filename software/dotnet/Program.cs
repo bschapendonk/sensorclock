@@ -14,6 +14,8 @@ namespace dotnet
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
+                    services.AddHostedService<GasSensorWorker>();
+                    services.AddHostedService<Apa102Worker>();
                     services.AddHostedService<ClockWorker>();
                 });
     }
