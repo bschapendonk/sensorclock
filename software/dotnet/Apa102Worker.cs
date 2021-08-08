@@ -43,16 +43,11 @@ namespace dotnet
 
         public override void Dispose()
         {
-            if (_apa102 != null)
-            {
-                _apa102.Pixels.Fill(Color.Black);
-                _apa102.Flush();
-                _apa102.Dispose();
-            }
+            _apa102?.Pixels.Fill(Color.Black);
+            _apa102?.Flush();
+            _apa102?.Dispose();
 
-            if (_spiDevice != null)
-                _spiDevice.Dispose();
-
+            _spiDevice?.Dispose();
 
             base.Dispose();
         }

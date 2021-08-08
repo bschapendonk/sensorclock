@@ -216,21 +216,14 @@ namespace dotnet
 
         public override void Dispose()
         {
-            if (_hour != null)
-                _hour.Dispose();
+            _hour?.Dispose();
+            _minute?.Dispose();
+            _second?.Dispose();
 
-            if (_minute != null)
-                _minute.Dispose();
-
-            if (_second != null)
-                _second.Dispose();
-
-            _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00 });
-            _allcall.Write(new byte[] { REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
-            _allcall.Write(new byte[] { REGISTER_MODE1, MODE1_SLEEP | MODE1_ALLCALL });
-
-            if (_allcall != null)
-                _allcall.Dispose();
+            _allcall?.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00 });
+            _allcall?.Write(new byte[] { REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
+            _allcall?.Write(new byte[] { REGISTER_MODE1, MODE1_SLEEP | MODE1_ALLCALL });
+            _allcall?.Dispose();
 
             base.Dispose();
         }

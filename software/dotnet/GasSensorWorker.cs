@@ -34,11 +34,8 @@ namespace dotnet
 
         public override void Dispose()
         {
-            if (_controller != null)
-            {
-                _controller.Write(16, PinValue.Low);
-                _controller.Dispose();
-            }
+            _controller?.Write(16, PinValue.Low);
+            _controller?.Dispose();
 
             base.Dispose();
         }
