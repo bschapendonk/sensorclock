@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace dotnet
 {
+    /// <summary>
+    /// Temporary, for now makes sure all APA102 are off
+    /// </summary>
     public class Apa102Worker : BackgroundService
     {
         private SpiDevice _spiDevice;
@@ -22,10 +25,7 @@ namespace dotnet
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             Init();
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                await Task.Delay(1000, stoppingToken);
-            }
+            await Task.Delay(-1, stoppingToken);
         }
 
         private void Init()
