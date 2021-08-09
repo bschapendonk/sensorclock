@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>dotnet-SensorClock-99A32783-0B10-4922-A2E4-05131194BC4A</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Iot.Device.Bindings" Version="1.5.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="5.0.1" />
+    <PackageReference Include="System.Device.Gpio" Version="1.5.0" />
+  </ItemGroup>
+</Project>
