@@ -13,7 +13,7 @@ namespace SensorClock.Workers
     /// </summary>
     public class Apa102Worker : BackgroundService
     {
-        private int _hue1 = 0;
+        private int _hue1;
         private int _hue2 = 45;
         private int _hue3 = 90;
         private int _hue4 = 135;
@@ -93,7 +93,7 @@ namespace SensorClock.Workers
                 _hue8 = 0;
         }
 
-        private Color HsvToRgb(int h, byte s, byte v)
+        private static Color HsvToRgb(int h, byte s, byte v)
         {
             var f = (h % 60) * 255 / 60;
             var p = (255 - s) * v / 255;

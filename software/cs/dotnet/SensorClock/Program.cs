@@ -4,7 +4,7 @@ using SensorClock.Workers;
 
 namespace SensorClock
 {
-    public class Program
+    public static class Program
     {
         public static void Main(string[] args)
         {
