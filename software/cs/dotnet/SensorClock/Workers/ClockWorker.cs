@@ -177,7 +177,7 @@ namespace SensorClock.Workers
             var now = DateTime.Now;
 
             Buffer.BlockCopy(DIGITS[now.Second], 0, _secondDisplayed, 0, _secondDisplayed.Length);
-            if (now.Millisecond < 500)
+            if (now.Millisecond > 500)
                 _secondDisplayed[11] = 0xFF;
 
             _second.Write(_secondDisplayed);
