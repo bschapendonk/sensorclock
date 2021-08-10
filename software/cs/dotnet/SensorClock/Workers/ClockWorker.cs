@@ -27,11 +27,9 @@ namespace SensorClock.Workers
         private const byte REGISTER_PWM0 = 0x02;
         private I2cDevice _allcall;
         private I2cDevice _hour;
-        private int _hourDisplayed = int.MaxValue;
         private I2cDevice _minute;
-        private int _minuteDisplayed = int.MaxValue;
         private I2cDevice _second;
-        private int _secondDisplayed = int.MaxValue;
+        private byte[] _secondDisplayed = new byte[17];
 
         #region Mask
 
@@ -153,7 +151,7 @@ namespace SensorClock.Workers
             while (!stoppingToken.IsCancellationRequested)
             {
                 Tick();
-                await Task.Delay(500, stoppingToken);
+                await Task.Delay(20, stoppingToken);
             }
         }
 
@@ -177,41 +175,19 @@ namespace SensorClock.Workers
         private void Tick()
         {
             var now = DateTime.Now;
-            if (_second != null)
-            {
-                var second = new byte[17];
-                Buffer.BlockCopy(DIGITS[now.Second], 0, second, 0, second.Length);
-                if (_secondDisplayed != now.Second)
-                {
-                    _secondDisplayed = now.Second;
-                }
-                else
-                {
-                    second[11] = 0xFF;
-                }
-                _second.Write(second);
 
-                if (_minute != null && _minuteDisplayed != now.Minute)
-                {
-                    _minuteDisplayed = now.Minute;
-                    _minute.Write(DIGITS[_minuteDisplayed]);
+            Buffer.BlockCopy(DIGITS[now.Second], 0, _secondDisplayed, 0, _secondDisplayed.Length);
+            if (now.Millisecond < 500)
+                _secondDisplayed[11] = 0xFF;
 
-                    if (_hour != null && _hourDisplayed != now.Hour)
-                    {
-                        _hourDisplayed = now.Hour;
-                        _hour.Write(DIGITS[_hourDisplayed]);
+            _second.Write(_secondDisplayed);
+            _minute.Write(DIGITS[now.Minute]);
+            _hour.Write(DIGITS[now.Hour]);
 
-                        if (now.Hour < DIMM_HOUR_END || now.Hour >= DIMM_HOUR_BEGIN)
-                        {
-                            _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DIMM });
-                        }
-                        else
-                        {
-                            _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DEFAULT });
-                        }
-                    }
-                }
-            }
+            if (now.Hour < DIMM_HOUR_END || now.Hour >= DIMM_HOUR_BEGIN)
+                _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DIMM });
+            else
+                _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DEFAULT });
         }
 
         public override void Dispose()

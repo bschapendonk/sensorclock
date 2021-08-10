@@ -1,7 +1,6 @@
 using Iot.Device.Apa102;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Device.Spi;
 using System.Drawing;
 using System.Threading;
