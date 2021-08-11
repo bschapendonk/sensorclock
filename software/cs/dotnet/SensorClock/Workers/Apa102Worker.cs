@@ -32,17 +32,26 @@ namespace SensorClock.Workers
                 Mode = SpiMode.Mode0 // ensure data is ready at clock rising edge
             });
             _apa102 = new Apa102(_spiDevice, 8);
-            _apa102.Pixels.Fill(Color.Black);
-            _apa102.Flush();
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _apa102.Pixels.Fill(Color.Black);
+            _apa102.Flush();
+
             //while (!stoppingToken.IsCancellationRequested)
             //{
             //    Rainbow();
-            //    await Task.Delay(5, stoppingToken);
+            //    try
+            //    {
+            //        await Task.Delay(5, stoppingToken);
+            //    }
+            //    catch (OperationCanceledException)
+            //    {
+            //        return;
+            //    }
             //}
+
             try
             {
                 await Task.Delay(-1, stoppingToken);

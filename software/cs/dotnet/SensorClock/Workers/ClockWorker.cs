@@ -138,24 +138,15 @@ namespace SensorClock.Workers
         public ClockWorker(ILogger<ClockWorker> logger)
         {
             _logger = logger;
-
             _allcall = I2cDevice.Create(new I2cConnectionSettings(1, ADDR_ALLCALL));
-            _allcall.Write(new byte[] { REGISTER_MODE1, MODE1_SUBADDR1 | MODE1_ALLCALL });
-            Task.Delay(10);
-            _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DEFAULT });
-            _allcall.Write(new byte[] { REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
-            _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0xFF, 0xFF, 0xFF, 0xFF });
-
             _hour = I2cDevice.Create(new I2cConnectionSettings(1, ADDR_HOUR));
             _minute = I2cDevice.Create(new I2cConnectionSettings(1, ADDR_MINUTE));
             _second = I2cDevice.Create(new I2cConnectionSettings(1, ADDR_SECOND));
-
-            _minute.Write(new byte[] { REGISTER_MODE1, MODE1_ALLCALL });
-            _second.Write(new byte[] { REGISTER_MODE1, MODE1_ALLCALL });
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            await Init();
             while (!stoppingToken.IsCancellationRequested)
             {
                 Tick();
@@ -168,6 +159,17 @@ namespace SensorClock.Workers
                     return;
                 }
             }
+        }
+        private async Task Init()
+        {
+            _allcall.Write(new byte[] { REGISTER_MODE1, MODE1_SUBADDR1 | MODE1_ALLCALL });
+            await Task.Delay(10);
+            _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DEFAULT });
+            _allcall.Write(new byte[] { REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
+            _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0xFF, 0xFF, 0xFF, 0xFF });
+
+            _minute.Write(new byte[] { REGISTER_MODE1, MODE1_ALLCALL });
+            _second.Write(new byte[] { REGISTER_MODE1, MODE1_ALLCALL });
         }
 
         private void Tick()

@@ -14,12 +14,13 @@ namespace SensorClock.Workers
         {
             _logger = logger;
             _controller = new GpioController();
-            _controller.OpenPin(16, PinMode.Output);
-            _controller.Write(16, PinValue.Low);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _controller.OpenPin(16, PinMode.Output);
+            _controller.Write(16, PinValue.Low);
+
             try
             {
                 await Task.Delay(-1, stoppingToken);
