@@ -1,9 +1,4 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
 using System.Device.I2c;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SensorClock.Workers
 {
@@ -25,11 +20,11 @@ namespace SensorClock.Workers
         private const byte REGISTER_LEDOUT0 = 0x14;
         private const byte REGISTER_MODE1 = 0x00;
         private const byte REGISTER_PWM0 = 0x02;
-        private I2cDevice _allcall;
-        private I2cDevice _hour;
-        private I2cDevice _minute;
-        private I2cDevice _second;
-        private byte[] _secondDisplayed = new byte[17];
+        private readonly I2cDevice _allcall;
+        private readonly I2cDevice _hour;
+        private readonly I2cDevice _minute;
+        private readonly I2cDevice _second;
+        private readonly byte[] _secondDisplayed = new byte[17];
 
         #region Mask
 
@@ -143,23 +138,10 @@ namespace SensorClock.Workers
         public ClockWorker(ILogger<ClockWorker> logger)
         {
             _logger = logger;
-        }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            await Init();
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                Tick();
-                await Task.Delay(20, stoppingToken);
-            }
-        }
-
-        private async Task Init()
-        {
             _allcall = I2cDevice.Create(new I2cConnectionSettings(1, ADDR_ALLCALL));
             _allcall.Write(new byte[] { REGISTER_MODE1, MODE1_SUBADDR1 | MODE1_ALLCALL });
-            await Task.Delay(10);
+            Task.Delay(10);
             _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DEFAULT });
             _allcall.Write(new byte[] { REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
             _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0xFF, 0xFF, 0xFF, 0xFF });
@@ -170,6 +152,22 @@ namespace SensorClock.Workers
 
             _minute.Write(new byte[] { REGISTER_MODE1, MODE1_ALLCALL });
             _second.Write(new byte[] { REGISTER_MODE1, MODE1_ALLCALL });
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                Tick();
+                try
+                {
+                    await Task.Delay(20, stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+            }
         }
 
         private void Tick()
@@ -192,14 +190,14 @@ namespace SensorClock.Workers
 
         public override void Dispose()
         {
-            _hour?.Dispose();
-            _minute?.Dispose();
-            _second?.Dispose();
+            _hour.Dispose();
+            _minute.Dispose();
+            _second.Dispose();
 
-            _allcall?.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00 });
-            _allcall?.Write(new byte[] { REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
-            _allcall?.Write(new byte[] { REGISTER_MODE1, MODE1_SLEEP | MODE1_ALLCALL });
-            _allcall?.Dispose();
+            _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00 });
+            _allcall.Write(new byte[] { REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
+            _allcall.Write(new byte[] { REGISTER_MODE1, MODE1_SLEEP | MODE1_ALLCALL });
+            _allcall.Dispose();
 
             base.Dispose();
         }

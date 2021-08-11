@@ -1,10 +1,6 @@
 using Iot.Device.Apa102;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using System.Device.Spi;
 using System.Drawing;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SensorClock.Workers
 {
@@ -22,28 +18,13 @@ namespace SensorClock.Workers
         private int _hue7 = 270;
         private int _hue8 = 315;
 
-        private SpiDevice _spiDevice;
-        private Apa102 _apa102;
+        private readonly SpiDevice _spiDevice;
+        private readonly Apa102 _apa102;
         private readonly ILogger<Apa102Worker> _logger;
 
         public Apa102Worker(ILogger<Apa102Worker> logger)
         {
             _logger = logger;
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            Init();
-            //while (!stoppingToken.IsCancellationRequested)
-            //{
-            //    Rainbow();
-            //    await Task.Delay(5, stoppingToken);
-            //}
-            await Task.Delay(-1, stoppingToken);
-        }
-
-        private void Init()
-        {
             _spiDevice = SpiDevice.Create(new SpiConnectionSettings(0, 0)
             {
                 ClockFrequency = 20_000_000,
@@ -53,6 +34,23 @@ namespace SensorClock.Workers
             _apa102 = new Apa102(_spiDevice, 8);
             _apa102.Pixels.Fill(Color.Black);
             _apa102.Flush();
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            //while (!stoppingToken.IsCancellationRequested)
+            //{
+            //    Rainbow();
+            //    await Task.Delay(5, stoppingToken);
+            //}
+            try
+            {
+                await Task.Delay(-1, stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
         }
 
         private void Rainbow()
@@ -115,11 +113,11 @@ namespace SensorClock.Workers
 
         public override void Dispose()
         {
-            _apa102?.Pixels.Fill(Color.Black);
-            _apa102?.Flush();
-            _apa102?.Dispose();
+            _apa102.Pixels.Fill(Color.Black);
+            _apa102.Flush();
+            _apa102.Dispose();
 
-            _spiDevice?.Dispose();
+            _spiDevice.Dispose();
 
             base.Dispose();
         }
