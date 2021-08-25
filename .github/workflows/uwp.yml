@@ -1,4 +1,4 @@
-name: CI
+name: Universal Windows Platform (UWP)
 
 on:
   push:
