@@ -20,7 +20,7 @@ jobs:
         include-prerelease: true
     - name: Restore dependencies
       run: dotnet restore
-      working-directory: ./software/cs/dotnet/SensorClock
+      working-directory: ./software/cs/dotnet
     - name: Build
       run: dotnet build --no-restore
-      working-directory: ./software/cs/dotnet/SensorClock
+      working-directory: ./software/cs/dotnet
