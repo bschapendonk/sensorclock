@@ -15,5 +15,5 @@ jobs:
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.0.3
       - name: MSBuild
-        run: msbuild MyProject.csproj
+        run: msbuild Sensorclock.sln
         working-directory: ./software/cs/uwp
