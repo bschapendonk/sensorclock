@@ -13,7 +13,7 @@ namespace SensorClock.Workers
         private readonly InfluxDBClient _client;
         private readonly ILogger<Apa102Worker> _logger;
 
-        public SensorWorker(ILogger<Apa102Worker> logger)
+        public SensorWorker(ILogger<Apa102Worker> logger, IConfiguration configuration)
         {
             _logger = logger;
 
@@ -31,7 +31,8 @@ namespace SensorClock.Workers
                 Gain = Gain.Normal
             };
 
-            _client = InfluxDBClientFactory.Create("http://localhost:8086");
+            // export CONNECTIONSTRINGS__INFLUXDB="http://localhost:8086?org=&bucket=&token="
+            _client = InfluxDBClientFactory.Create(configuration.GetConnectionString("InfluxDB"));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
