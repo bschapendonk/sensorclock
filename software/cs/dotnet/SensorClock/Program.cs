@@ -7,6 +7,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddHostedService<GasSensorWorker>();
         services.AddHostedService<Apa102Worker>();
         services.AddHostedService<ClockWorker>();
+        services.AddHostedService<InfluxDBWorker>();
     })
     .Build();
 
