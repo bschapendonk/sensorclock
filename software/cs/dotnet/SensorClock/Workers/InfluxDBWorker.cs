@@ -2,6 +2,7 @@
 using InfluxDB.Client.Api.Domain;
 using InfluxDB.Client.Writes;
 using Iot.Device.Bmxx80;
+using Iot.Device.Bmxx80.FilteringMode;
 using IoT.Device.Tsl256x;
 using System.Device.I2c;
 using UnitsNet;
@@ -23,16 +24,13 @@ namespace SensorClock.Workers
 
             _bme280 = new Bme280(I2cDevice.Create(new I2cConnectionSettings(1, Bmx280Base.DefaultI2cAddress)))
             {
-                HumiditySampling = Sampling.Standard,
-                PressureSampling = Sampling.Standard,
-                TemperatureSampling = Sampling.Standard
+                HumiditySampling = Sampling.HighResolution,
+                PressureSampling = Sampling.HighResolution,
+                TemperatureSampling = Sampling.HighResolution,
+                FilterMode = Bmx280FilteringMode.X8,
             };
 
-            _tsl2561 = new Tsl256x(I2cDevice.Create(new I2cConnectionSettings(1, Tsl256x.DefaultI2cAddress)), PackageType.Other)
-            {
-                IntegrationTime = IntegrationTime.Integration402Milliseconds,
-                Gain = Gain.Normal
-            };
+            _tsl2561 = new Tsl256x(I2cDevice.Create(new I2cConnectionSettings(1, Tsl256x.DefaultI2cAddress)), PackageType.Other);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -44,7 +42,7 @@ namespace SensorClock.Workers
                 var result = await _bme280.ReadAsync();
                 if (result.Humidity.HasValue)
                 {
-                    await write.WritePointAsync("sensorclock","sensorclock",
+                    await write.WritePointAsync("sensorclock", "sensorclock",
                         PointData.Measurement("humidity").Field("value", result.Humidity.Value.Value).Timestamp(DateTime.UtcNow, WritePrecision.S),
                         stoppingToken);
                 }
@@ -64,12 +62,12 @@ namespace SensorClock.Workers
                 }
 
                 await write.WritePointAsync("sensorclock", "sensorclock",
-                        PointData.Measurement("lux").Field("value", _tsl2561.MeasureAndGetIlluminance().Value).Timestamp(DateTime.UtcNow, WritePrecision.S),
+                        PointData.Measurement("lux").Field("value", _tsl2561.MeasureAndGetIlluminance().Lux).Timestamp(DateTime.UtcNow, WritePrecision.S),
                         stoppingToken);
 
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
                 }
                 catch (OperationCanceledException)
                 {
