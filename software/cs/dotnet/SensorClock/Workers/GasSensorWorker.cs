@@ -33,7 +33,8 @@ namespace SensorClock.Workers
 
         public override void Dispose()
         {
-            _controller.Write(16, PinValue.Low);
+            if (_controller.IsPinOpen(16))
+                _controller.Write(16, PinValue.Low);
             _controller.Dispose();
 
             base.Dispose();
