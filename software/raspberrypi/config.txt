@@ -1,3 +1,0 @@
-dtparam=i2c_arm=on
-dtparam=i2c_arm_baudrate=10000
-dtparam=spi=on

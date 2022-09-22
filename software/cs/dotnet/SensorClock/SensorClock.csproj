@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>dotnet-SensorClock-99A32783-0B10-4922-A2E4-05131194BC4A</UserSecretsId>
@@ -9,6 +9,6 @@
 
   <ItemGroup>
     <PackageReference Include="Iot.Device.Bindings" Version="2.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="7.0.0-rc.1.22426.10" />
   </ItemGroup>
 </Project>
