@@ -7,20 +7,18 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: |
-          7.0.x
-        include-prerelease: true
-    - name: Restore dependencies
-      run: dotnet restore
-      working-directory: ./software/cs/dotnet
-    - name: Build
-      run: dotnet build --no-restore
-      working-directory: ./software/cs/dotnet
+      - uses: actions/checkout@v3
+      - name: Setup .NET Core SDK 7.0.x
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+          dotnet-quality: ga
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: ./software/cs/dotnet
+      - name: Build
+        run: dotnet build --no-restore
+        working-directory: ./software/cs/dotnet
