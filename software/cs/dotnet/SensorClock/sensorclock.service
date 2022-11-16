@@ -1,0 +1,10 @@
+﻿[Unit]
+Description=SensorClock
+
+[Service]
+Type=notify
+User=pi
+ExecStart=/home/pi/sensorclock/SensorClock
+
+[Install]
+WantedBy=multi-user.target
