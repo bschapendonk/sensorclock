@@ -25,3 +25,8 @@ jobs:
           --property:PublishSingleFile=true
           --property:PublishTrimmed=true
         working-directory: ./software/cs/dotnet
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: linux-arm64
+          path: ./software/cs/dotnet/SensorClock/bin/Release/net7.0/publish/linux-arm64/
