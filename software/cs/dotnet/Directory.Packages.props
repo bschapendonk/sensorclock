@@ -1,0 +1,10 @@
+﻿<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Iot.Device.Bindings" Version="2.2.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Systemd" Version="7.0.0" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+  </ItemGroup>
+</Project>

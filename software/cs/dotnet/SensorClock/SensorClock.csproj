@@ -4,11 +4,11 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UserSecretsId>dotnet-SensorClock-99A32783-0B10-4922-A2E4-05131194BC4A</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Iot.Device.Bindings" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="7.0.0" />
+    <PackageReference Include="Iot.Device.Bindings" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" />
   </ItemGroup>
+
 </Project>
