@@ -24,4 +24,7 @@ await host.RunAsync();
  * sudo systemctl status sensorclock.service
  * 
  * sudo nano /etc/systemd/timesyncd.conf
+ * timedatectl status
+ * timedatectl show-timesync
+ * timedatectl timesync-status
  */
