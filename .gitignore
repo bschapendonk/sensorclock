@@ -363,4 +363,5 @@ FodyWeavers.xsd
 
 # KiCad
 **/*-backups/
+**/*-cache
 *.kicad_prl
