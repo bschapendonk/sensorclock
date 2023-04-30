@@ -373,3 +373,4 @@ FodyWeavers.xsd
 .metadata_never_index
 .Trashes
 boot_out.txt
+settings.toml
