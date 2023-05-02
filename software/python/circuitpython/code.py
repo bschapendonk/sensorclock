@@ -3,7 +3,9 @@ import adafruit_dotstar
 import adafruit_ntp
 import asyncio
 import board
+import busio
 import constants
+import digitalio
 import ipaddress
 import os
 import rtc
@@ -25,7 +27,19 @@ print("My IP address is", wifi.radio.ipv4_address)
 ntp = adafruit_ntp.NTP(pool, server=ntp_server, tz_offset=0)
 rtc.RTC().datetime = ntp.datetime
 
-# spi = busio.SPI(board.SCK, MISO=board.MISO)
+# i2c = busio.I2C(scl=board.GP5, sda=board.GP4)
+
+def init():
+    num_pixels = 8
+    pixels = adafruit_dotstar.DotStar(board.GP18, board.GP19, num_pixels, 0)
+
+    heater = digitalio.DigitalInOut(board.GP2)
+    heater.direction = digitalio.Direction.OUTPUT
+    heater.value = False
+
+    # shdn_3v3 = digitalio.DigitalInOut(board.GP3)
+    # shdn_3v3.direction = digitalio.Direction.OUTPUT
+    # shdn_3v3.value = True
 
 async def rtc_update():
     while True:
