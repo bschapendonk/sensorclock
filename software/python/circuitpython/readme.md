@@ -6,6 +6,8 @@
 - adafruit_datetime
 - adafruit_dotstar
 - adafruit_ntp
+- adafruit_ticks
+- asyncio/
 
 ### Community Bundle
-- tzdb
+- tzdb/
