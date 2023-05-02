@@ -1,3 +1,4 @@
+from adafruit_datetime import datetime
 import adafruit_dotstar
 import adafruit_ntp
 import board
@@ -8,6 +9,9 @@ import rtc
 import socketpool
 import time
 import wifi
+
+from tzdb import timezone
+
 
 print()
 print("Connecting to WiFi")
@@ -29,13 +33,15 @@ ipv4 = ipaddress.ip_address("8.8.4.4")
 print("Ping google.com: %f ms" % (wifi.radio.ping(ipv4)*1000))
 
 ntp = adafruit_ntp.NTP(pool, tz_offset=0)
-
 rtc.RTC().datetime = ntp.datetime
 
-
-print(constants._DIGITS[0], sep = ", ")
+target = "Europe/Amsterdam"
 
 while True:
-    print(time.localtime())
-    print(constants._DIGITS[time.localtime().tm_sec], sep = ", ")
+    utc_now = time.time()
+    utc_now_dt = datetime.fromtimestamp(utc_now)
+    print("UTC: {}".format(utc_now_dt.ctime()))
+    localtime = utc_now_dt + timezone(target).utcoffset(utc_now_dt)
+    print("{}: {}".format(target, localtime.ctime()))
+    print(constants._DIGITS[localtime.second], sep = ", ")
     time.sleep(1)
