@@ -6,7 +6,6 @@ import board
 import busio
 import PCA9622
 import digitalio
-import ipaddress
 import os
 import rtc
 import socketpool
