@@ -103,11 +103,11 @@ async def rtc_update():
         await asyncio.sleep(300)
 
 
-async def display_update(localtime):
+async def display_update(localtime, display_dot):
     current_second = PCA9622.DIGITS[localtime.second]
 
     # flash the last second dot every 500ms
-    if localtime.microsecond % 500000 == 1:
+    if display_dot:
         current_second[11] = 0xFF
 
     i2c.writeto(PCA9622.ADDR_SECOND, bytes(current_second))
@@ -129,12 +129,17 @@ async def display_update(localtime):
 
 
 async def display_tick():
+    display_dot = False
     while True:
-        utc_now = time.time()
-        utc_now_dt = datetime.fromtimestamp(utc_now)
-        # print("UTC: {}".format(utc_now_dt.ctime()))
-        localtime = utc_now_dt + timezone(tz_name).utcoffset(utc_now_dt)
-        print("{}: {}".format(tz_name, localtime.ctime()))
+        utc_now = datetime.now()
+        localtime = utc_now + timezone(tz_name).utcoffset(utc_now)
+
+        if display_dot:
+            display_dot = False
+        else:
+            display_dot = True
+
+        print("{}: {} {}".format(tz_name, localtime.ctime(), display_dot))
 
         await asyncio.sleep_ms(500)
 
