@@ -1,3 +1,4 @@
+import adafruit_ds3231
 import adafruit_dotstar
 import adafruit_ntp
 import asyncio
@@ -7,7 +8,6 @@ import clock
 import digitalio
 import mdns
 import os
-import rtc
 import socketpool
 import time
 import wifi
@@ -20,7 +20,8 @@ from tzdb import timezone
 async def update_rtc():
     while True:
         try:
-            rtc.RTC().datetime = ntp.datetime
+            utc_now = datetime.fromtimestamp(time.mktime(ntp.datetime))
+            rtc.datetime = timezone(tz_name).fromutc(utc_now).timetuple()
         except OSError as error:
             print(error)
             continue
@@ -28,14 +29,9 @@ async def update_rtc():
         await asyncio.sleep(300)
 
 
-def get_localtime(utc_now: datetime):
-    return utc_now + timezone(tz_name).utcoffset(utc_now)
-
-
 async def update_clock():
     while True:
-        localtime = get_localtime(datetime.now())
-        clock.tick(localtime)
+        clock.tick(rtc.datetime)
         await asyncio.sleep(0.02)
 
 
@@ -73,11 +69,11 @@ pool = socketpool.SocketPool(wifi.radio)
 print("My IP address is", wifi.radio.ipv4_address)
 
 ntp = adafruit_ntp.NTP(pool, server=os.getenv("NTP_SERVER"), tz_offset=0)
-rtc.RTC().datetime = ntp.datetime
 
+i2c = busio.I2C(scl=board.GP5, sda=board.GP4, frequency=400_000)
+rtc = adafruit_ds3231.DS3231(i2c)
 tz_name = os.getenv("TZ_NAME")
 
-i2c = busio.I2C(scl=board.GP5, sda=board.GP4)
 clock = clock.Clock(i2c)
 
 asyncio.run(main())
