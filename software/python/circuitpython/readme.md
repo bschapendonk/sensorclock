@@ -6,6 +6,7 @@
 - adafruit_bme280/
 - adafruit_bus_device/
 - adafruit_datetime
+- adafruit_httpserver/
 - adafruit_mcp3xxx/
 - adafruit_dotstar
 - adafruit_ntp
