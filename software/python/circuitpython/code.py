@@ -14,8 +14,9 @@ import wifi
 
 from tzdb import timezone
 
+
 # try to update the rtc every 5 minutes from ntp
-async def update_rtc_from_ntp(ntp: adafruit_ntp.NTP):
+async def update_rtc(ntp: adafruit_ntp.NTP):
     while True:
         try:
             rtc.RTC().datetime = ntp.datetime
@@ -23,27 +24,22 @@ async def update_rtc_from_ntp(ntp: adafruit_ntp.NTP):
             print(error)
         await asyncio.sleep(300)
 
-async def update_clock(clock: clock.Clock):
-    display_dot = False
-    tz_name = os.getenv("TZ_NAME")
+
+def get_localtime(utc_now: datetime, tz_name: str):
+    return utc_now + timezone(tz_name).utcoffset(utc_now)
+
+
+async def update_clock(clock: clock.Clock, tz_name: str):
     while True:
-        utc_now = datetime.now()
-        localtime = utc_now + timezone(tz_name).utcoffset(utc_now)
-
-        if display_dot:
-            display_dot = False
-        else:
-            display_dot = True
-
-        # clock.update(localtime, display_dot)
-
-        print("{}: {} {}".format(tz_name, localtime.ctime(), display_dot))
+        localtime = get_localtime(datetime.now(), tz_name)
+        # clock.tick(localtime)
+        print("{}: {}".format(tz_name, localtime.ctime()))
 
         await asyncio.sleep_ms(500)
 
 
 async def main():
-     # initialize and turn off all apa102 leds
+    # initialize and turn off all apa102 leds
     adafruit_dotstar.DotStar(board.GP18, board.GP19, 8, brightness=0)
 
     # turn of the heater for the gas sensors
@@ -65,12 +61,15 @@ async def main():
     ntp = adafruit_ntp.NTP(pool, server=os.getenv("NTP_SERVER"), tz_offset=0)
     rtc.RTC().datetime = ntp.datetime
 
+    tz_name = os.getenv("TZ_NAME")
+
     # i2c = busio.I2C(scl=board.GP5, sda=board.GP4)
     # clock = clock.Clock(i2c)
     clock = None
 
-    rtc_update_task = asyncio.create_task(update_rtc_from_ntp(ntp))
-    display_tick_task = asyncio.create_task(update_clock(clock))
+    rtc_update_task = asyncio.create_task(update_rtc(ntp))
+    display_tick_task = asyncio.create_task(update_clock(clock, tz_name))
     await asyncio.gather(rtc_update_task, display_tick_task)
+
 
 asyncio.run(main())

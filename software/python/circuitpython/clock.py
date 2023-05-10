@@ -1,4 +1,5 @@
 from adafruit_datetime import datetime
+import asyncio
 import busio
 import time
 
@@ -6,6 +7,7 @@ import time
 class Clock:
     def __init__(self, i2c_bus: busio.I2C):
         self.i2c = i2c_bus
+        self.display_dot = False
         self.ADDR_ALLCALL = 0x70
         self.ADDR_HOUR = 0x71
         self.ADDR_MINUTE = 0x01
@@ -1972,21 +1974,21 @@ class Clock:
             self.ADDR_HOUR, bytes([self.REGISTER_MODE1, self.MODE1_ALLCALL])
         )
 
-    def update(self, localtime: datetime, display_dot: bool):
-        current_second = self.DIGITS[localtime.second]
+    def tick(self, now: datetime):
+        current_second = self.DIGITS[now.second]
 
         # flash the last second dot every 500ms
-        if display_dot:
+        if self.display_dot:
             current_second[11] = 0xFF
+            self.display_dot = False
+        else:
+            self.display_dot = True
 
         self.i2c.writeto(self.ADDR_SECOND, bytes(current_second))
-        self.i2c.writeto(self.ADDR_MINUTE, bytes(self.DIGITS[localtime.minute]))
-        self.i2c.writeto(self.ADDR_HOUR, bytes(self.DIGITS[localtime.hour]))
+        self.i2c.writeto(self.ADDR_MINUTE, bytes(self.DIGITS[now.minute]))
+        self.i2c.writeto(self.ADDR_HOUR, bytes(self.DIGITS[now.hour]))
 
-        if (
-            localtime.hour < self.DIMM_HOUR_END
-            or localtime.hour >= self.DIMM_HOUR_BEGIN
-        ):
+        if now.hour < self.DIMM_HOUR_END or now.hour >= self.DIMM_HOUR_BEGIN:
             self.i2c.writeto(
                 self.ADDR_ALLCALL, bytes(self.REGISTER_GRPPWM, self.PWM_DIMM)
             )
