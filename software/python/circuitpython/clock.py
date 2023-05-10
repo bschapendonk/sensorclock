@@ -1,5 +1,4 @@
 from adafruit_datetime import datetime
-import asyncio
 import busio
 import time
 
@@ -24,7 +23,9 @@ class Clock:
         self.REGISTER_LEDOUT0 = 0x14
         self.REGISTER_MODE1 = 0x00
         self.REGISTER_PWM0 = 0x02
-
+        self.second = 0
+        self.minute = 0
+        self.hour = 0
         self.DIGITS = [
             [
                 self.REGISTER_PWM0 | self.AUTO_INCREMENT,
@@ -1928,72 +1929,93 @@ class Clock:
             ],
         ]
 
-    def init(self):
-        self.i2c.writeto(
-            self.ADDR_ALLCALL,
-            bytes([self.REGISTER_MODE1, self.MODE1_SUBADDR1 | self.MODE1_ALLCALL]),
-        )
-        time.sleep_ms(10)
-        self.i2c.writeto(
-            self.ADDR_ALLCALL, bytes([self.REGISTER_GRPPWM, self.PWM_DEFAULT])
-        )
-        self.i2c.writeto(
-            self.ADDR_ALLCALL,
-            bytes(
-                [
-                    self.REGISTER_PWM0 | self.AUTO_INCREMENT,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                ]
-            ),
-        )
-        self.i2c.writeto(
-            self.ADDR_ALLCALL,
-            bytes(
-                [self.REGISTER_LEDOUT0 | self.AUTO_INCREMENT, 0xFF, 0xFF, 0xFF, 0xFF]
-            ),
-        )
-        self.i2c.writeto(
-            self.ADDR_MINUTE, bytes([self.REGISTER_MODE1, self.MODE1_ALLCALL])
-        )
-        self.i2c.writeto(
-            self.ADDR_HOUR, bytes([self.REGISTER_MODE1, self.MODE1_ALLCALL])
-        )
+        while not self.i2c.try_lock():
+            pass
 
-    def tick(self, now: datetime):
-        current_second = self.DIGITS[now.second]
-
-        # flash the last second dot every 500ms
-        if self.display_dot:
-            current_second[11] = 0xFF
-            self.display_dot = False
-        else:
-            self.display_dot = True
-
-        self.i2c.writeto(self.ADDR_SECOND, bytes(current_second))
-        self.i2c.writeto(self.ADDR_MINUTE, bytes(self.DIGITS[now.minute]))
-        self.i2c.writeto(self.ADDR_HOUR, bytes(self.DIGITS[now.hour]))
-
-        if now.hour < self.DIMM_HOUR_END or now.hour >= self.DIMM_HOUR_BEGIN:
-            self.i2c.writeto(
-                self.ADDR_ALLCALL, bytes(self.REGISTER_GRPPWM, self.PWM_DIMM)
-            )
-        else:
+        try:
             self.i2c.writeto(
                 self.ADDR_ALLCALL,
-                bytes(self.REGISTER_GRPPWM, self.PWM_DEFAULT),
+                bytes([self.REGISTER_MODE1, self.MODE1_SUBADDR1 | self.MODE1_ALLCALL]),
             )
+            time.sleep(0.01)
+            self.i2c.writeto(
+                self.ADDR_ALLCALL, bytes([self.REGISTER_GRPPWM, self.PWM_DEFAULT])
+            )
+            self.i2c.writeto(
+                self.ADDR_ALLCALL,
+                bytes(
+                    [
+                        self.REGISTER_PWM0 | self.AUTO_INCREMENT,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                    ]
+                ),
+            )
+            self.i2c.writeto(
+                self.ADDR_ALLCALL,
+                bytes(
+                    [
+                        self.REGISTER_LEDOUT0 | self.AUTO_INCREMENT,
+                        0xFF,
+                        0xFF,
+                        0xFF,
+                        0xFF,
+                    ]
+                ),
+            )
+            self.i2c.writeto(
+                self.ADDR_MINUTE, bytes([self.REGISTER_MODE1, self.MODE1_ALLCALL])
+            )
+            self.i2c.writeto(
+                self.ADDR_SECOND, bytes([self.REGISTER_MODE1, self.MODE1_ALLCALL])
+            )
+        finally:
+            self.i2c.unlock()
+
+    def tick(self, now: datetime):
+        # flash the last second dot every 500ms
+        # if self.display_dot:
+        #     second[11] = 0xFF
+        #     self.display_dot = False
+        # else:
+        #     self.display_dot = True
+
+        while not self.i2c.try_lock():
+            pass
+
+        try:
+            if self.second != now.second:
+                self.second = now.second
+                self.i2c.writeto(self.ADDR_SECOND, bytes(self.DIGITS[self.second]))
+            elif self.minute != now.minute:
+                self.minute = now.minute
+                self.i2c.writeto(self.ADDR_MINUTE, bytes(self.DIGITS[self.minute]))
+            elif self.hour != now.hour:
+                self.hour = now.hour
+                self.i2c.writeto(self.ADDR_HOUR, bytes(self.DIGITS[self.hour]))
+
+                if now.hour < self.DIMM_HOUR_END or now.hour >= self.DIMM_HOUR_BEGIN:
+                    self.i2c.writeto(
+                        self.ADDR_ALLCALL, bytes([self.REGISTER_GRPPWM, self.PWM_DIMM])
+                    )
+                else:
+                    self.i2c.writeto(
+                        self.ADDR_ALLCALL,
+                        bytes([self.REGISTER_GRPPWM, self.PWM_DEFAULT]),
+                    )
+        finally:
+            self.i2c.unlock()
