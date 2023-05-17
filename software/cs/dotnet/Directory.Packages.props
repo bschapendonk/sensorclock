@@ -4,7 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Iot.Device.Bindings" Version="2.2.0" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Systemd" Version="8.0.0-preview.3.23174.8" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Systemd" Version="8.0.0-preview.4.23259.5" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="1.1.1" />
   </ItemGroup>
 </Project>
