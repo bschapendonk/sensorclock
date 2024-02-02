@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v3
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
@@ -26,7 +26,7 @@ jobs:
           --property:PublishTrimmed=true
         working-directory: software/cs/dotnet
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: linux-arm64
           path: software/cs/dotnet/SensorClock/bin/Release/net8.0/linux-arm64/publish/
