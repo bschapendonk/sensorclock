@@ -151,14 +151,14 @@ namespace SensorClock.Workers
         }
         private async Task Init()
         {
-            _allcall.Write(new byte[] { REGISTER_MODE1, MODE1_SUBADDR1 | MODE1_ALLCALL });
+            _allcall.Write([REGISTER_MODE1, MODE1_SUBADDR1 | MODE1_ALLCALL]);
             await Task.Delay(10);
-            _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DEFAULT });
-            _allcall.Write(new byte[] { REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
-            _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0xFF, 0xFF, 0xFF, 0xFF });
+            _allcall.Write([REGISTER_GRPPWM, PWM_DEFAULT]);
+            _allcall.Write([REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+            _allcall.Write([REGISTER_LEDOUT0 | AUTO_INCREMENT, 0xFF, 0xFF, 0xFF, 0xFF]);
 
-            _minute.Write(new byte[] { REGISTER_MODE1, MODE1_ALLCALL });
-            _second.Write(new byte[] { REGISTER_MODE1, MODE1_ALLCALL });
+            _minute.Write([REGISTER_MODE1, MODE1_ALLCALL]);
+            _second.Write([REGISTER_MODE1, MODE1_ALLCALL]);
         }
 
         private void Tick()
@@ -174,9 +174,9 @@ namespace SensorClock.Workers
             _hour.Write(DIGITS[now.Hour]);
 
             if (now.Hour < DIMM_HOUR_END || now.Hour >= DIMM_HOUR_BEGIN)
-                _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DIMM });
+                _allcall.Write([REGISTER_GRPPWM, PWM_DIMM]);
             else
-                _allcall.Write(new byte[] { REGISTER_GRPPWM, PWM_DEFAULT });
+                _allcall.Write([REGISTER_GRPPWM, PWM_DEFAULT]);
         }
 
         public override void Dispose()
@@ -185,9 +185,9 @@ namespace SensorClock.Workers
             _minute.Dispose();
             _second.Dispose();
 
-            _allcall.Write(new byte[] { REGISTER_LEDOUT0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00 });
-            _allcall.Write(new byte[] { REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
-            _allcall.Write(new byte[] { REGISTER_MODE1, MODE1_SLEEP | MODE1_ALLCALL });
+            _allcall.Write([REGISTER_LEDOUT0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00]);
+            _allcall.Write([REGISTER_PWM0 | AUTO_INCREMENT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+            _allcall.Write([REGISTER_MODE1, MODE1_SLEEP | MODE1_ALLCALL]);
             _allcall.Dispose();
 
             base.Dispose();
