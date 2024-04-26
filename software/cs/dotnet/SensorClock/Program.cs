@@ -13,7 +13,8 @@ var host = Host.CreateDefaultBuilder(args)
 await host.RunAsync();
 
 // https://blog.maartenballiauw.be/post/2021/05/25/running-a-net-application-as-a-service-on-linux-with-systemd.html
-/* sudo nano -w /etc/systemd/system/sensorclock.service
+/* nano -w ~/.config/systemd/user/sensorclock.service
+ * sudo nano -w /etc/systemd/system/sensorclock.service
  * 
  * sudo systemctl daemon-reload
  * sudo systemctl enable sensorclock.service
