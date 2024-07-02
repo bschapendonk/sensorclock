@@ -18,6 +18,11 @@ jobs:
           dotnet-version: 9.0.x
           dotnet-quality: preview
 
+      - name: ⚙️ Install lcov
+        run: |
+          sudo apt update
+          sudo apt -y install binutils-aarch64-linux-gnu
+
       - run: >-
           dotnet publish
           --configuration:Release
