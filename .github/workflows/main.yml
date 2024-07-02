@@ -21,7 +21,7 @@ jobs:
       - name: ⚙️ Install lcov
         run: |
           sudo apt update
-          sudo apt -y install binutils-aarch64-linux-gnu
+          sudo apt -y install clang binutils-aarch64-linux-gnu
 
       - run: >-
           dotnet publish
