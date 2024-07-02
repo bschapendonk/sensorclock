@@ -21,7 +21,7 @@ jobs:
       - name: ⚙️ Install lcov
         run: |
           sudo apt update
-          sudo apt -y install clang zlib1g-dev libkrb5-dev binutils-aarch64-linux-gnu
+          sudo apt -y install clang gcc-multilib binutils-aarch64-linux-gnu
 
       - run: >-
           dotnet publish
