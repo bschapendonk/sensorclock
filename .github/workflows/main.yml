@@ -18,11 +18,6 @@ jobs:
           dotnet-version: 9.0.x
           dotnet-quality: preview
 
-      - name: ⚙️ Install lcov
-        run: |
-          sudo apt update
-          sudo apt -y install clang llvm binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu zlib1g-dev:arm64
-
       - run: >-
           dotnet publish
           --configuration:Release
@@ -30,7 +25,6 @@ jobs:
           --runtime:linux-arm64
           --property:PublishSingleFile=true
           --property:PublishTrimmed=true
-          --property:PublishAot=true
         working-directory: software/cs/dotnet
 
       - uses: actions/upload-artifact@v4
