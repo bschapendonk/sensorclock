@@ -25,7 +25,7 @@ jobs:
           --runtime:linux-arm64
           --property:PublishSingleFile=true
           --property:PublishTrimmed=true
-          --property:PublishAot=true
+          --property:PublishReadyToRun=true
         working-directory: software/cs/dotnet
 
       - uses: actions/upload-artifact@v4
