@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10
-          dotnet-quality: preview
+          # dotnet-quality: preview
 
       - run: >-
           dotnet publish
