@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10
-          # dotnet-quality: preview
+      # - uses: actions/setup-dotnet@v5
+      #   with:
+      #     dotnet-version: 10
+      #     # dotnet-quality: preview
 
       - run: >-
           dotnet publish
@@ -27,7 +27,7 @@ jobs:
           --property:PublishTrimmed=true
         working-directory: software/cs/dotnet
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: linux-arm64
           path: software/cs/dotnet/SensorClock/bin/Release/net10.0/linux-arm64/publish/
