@@ -1,14 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
-  <PropertyGroup>
-    <TargetFramework>net11.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net11.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<EnablePreviewFeatures>true</EnablePreviewFeatures>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Iot.Device.Bindings" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Iot.Device.Bindings" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Systemd" />
+	</ItemGroup>
 
 </Project>
